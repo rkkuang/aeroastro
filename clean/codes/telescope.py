@@ -1,8 +1,10 @@
 import numpy as np
 import matplotlib.pyplot as plt
+import cv2
 
 class Telescope():
     uvcover = None
+    dirty_beam = None
     def __init__(self, poslist, directionlist):
         self.poslist = poslist
         self.directionlist = directionlist
@@ -21,12 +23,22 @@ class Telescope():
             for i in np.arange(start_angle,end_angle,dtheta):
                 self.uvcover[int(Row/2-radius*np.sin(i)),int(Col/2+radius*np.cos(i))]=1
         return self.uvcover
-    def uvplot(self,title):
-        plt.imshow(self.uvcover, cmap = plt.cm.gray_r)
-        plt.xlabel("u (pixel)")
-        plt.ylabel("v (pixel)")
+    def plot(self, whichimg, title, xlabel, ylabel):
+        plt.figure()
+        plt.imshow(whichimg, cmap = plt.cm.gray_r)
+        plt.xlabel(xlabel)
+        plt.ylabel(ylabel)
         plt.title(title)
-        plt.show()
+    def dirty_beam(self):
+        # generate dirty beam from uv coverage
+        #https://blog.csdn.net/giffordy/article/details/92838671
+        # f_ishift = np.fft.ifftshift(self.uvcover)
+        f_ishift = np.fft.ifftshift(self.uvcover)
+        self.dirty_beam = cv2.idft(f_ishift)
+        #print(img_back.shape)
+        #input(">>>>>>>>")
+        #img_back = cv2.magnitude(img_back[:,:,0],img_back[:,:,1])
+        return self.dirty_beam
 
 
 if __name__ == "__main__":
@@ -45,4 +57,7 @@ if __name__ == "__main__":
     site2 = (200,240,120,0.2)
     site3 = (150,60,120,0.2)
     tele1.fake_uvcover(RC,(site1,site2,site3))
-    tele1.uvplot("Fake uv coverage of 3 sites")
+    tele1.plot(tele1.uvcover, "Fake uv coverage of 3 sites","u (pixel)", "v (pixel)")
+    tele1.dirty_beam()
+    tele1.plot(tele1.dirty_beam, "Dirty beam of 3 sites","x (pixel)", "y (pixel)")
+    plt.show()
