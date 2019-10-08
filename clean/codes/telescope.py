@@ -9,6 +9,7 @@ class Telescope():
     def uvcoverage(self, dt, t0, t1, freq):
         pass
     def fake_uvcover(self, RC, teles):
+    	# RC is the size of generate uv coverage image, teles are sites in different radiu and angle_position
         Row = RC[0]
         Col = RC[1]
         self.uvcover = np.zeros((Row,Col))#in pixel 
