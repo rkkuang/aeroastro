@@ -9,10 +9,13 @@ class Cleaner():
     uvcover = None
     def __init__(self, dirtymap):
         self.dirtymap = dirtymap
-    def plot(self, whichimg, title, scale = "log", inuv = False, save = False, colorbar = False):
-        plt.imshow(self.uvcover)
-        if scale == "log":
-            pass
+    # def plot(self, whichimg, title, scale = "log",  save = False, colorbar = False):
+    #     plt.imshow(whichimg)
+    #     plt.xlabel(xlabel)
+    #     plt.ylabel(ylabel)
+    #     plt.title(title)
+    #     if colorbar:
+    #         plt.colorbar()
 
 
 
