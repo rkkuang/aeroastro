@@ -12,10 +12,10 @@ from gaussfitter import gaussian
 tele1 = Telescope([],[])
 RC = (512,512)
 
-numsites = 130
+numsites = 200
 sites = []
 dangle = 0.1
-angle_arnge = 160
+angle_arnge = 360
 inner = 10
 for i in range(int(numsites/3)):
     sites.append((random.random()*inner,360*random.random(),angle_arnge,dangle))
@@ -78,38 +78,38 @@ cl = Cleaner(lenna_map_mag, tele1.dirty_beam, model_beam_para)
 plt.figure()
 
 plt.subplot(231)
-plot(tele1.uvcover, title = "Fake uv coverage of {} sites".format(len(sites)),xlabel = "u (pixel)", ylabel = "v (pixel)", colorbar = True)
+plot(tele1.uvcover, title = "Fake uv coverage of {} sites".format(len(sites)),xlabel = "u (pixel)", ylabel = "v (pixel)", colorbar = True, cmap = plt.cm.jet)
 
 plt.subplot(232)
-plot(lenna_map_mag, title = "Dirty map (linear scale)",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+plot(lenna_map_mag, title = "Dirty map (linear scale)",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False, cmap = plt.cm.jet)
 
 
 plt.subplot(233)
 # plt.matshow(cl.model_beam, cmap=plt.cm.gist_earth_r)
 cl.gen_model_beam_byhand(coresize = 512, height=1, center_x=256, center_y=256, width_x=5, width_y=5)
 # plot(cl.model_beam, title = "Model beam",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
-plot(point_source, title = "{} point sources img cov with a gaussian kernel with some noise\n(True brightness distribution)".format(num_source),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+plot(point_source, title = "{} point sources img cov with a gaussian kernel with some noise\n(True brightness distribution)".format(num_source),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False, cmap = plt.cm.jet)
 
 itertime = 5000
 loop_gain = 0.2
-peak = 1000
+peak = 5000
 # cl.clean(itertime = itertime, loop_gain = loop_gain, criteria = "max_itertime")
 
 cl.clean(loop_gain = loop_gain, criteria = "peak", peak = peak)
 # plt.imshow(cl.residual)
 plt.subplot(234)
 # plot(cl.residual, title = "Residual after {} clean steps with loop gain {} (linear scale)".format(itertime, loop_gain),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True , islog = False)
-plot(cl.residual, title = "Residual after peak < {} with loop gain {} (linear scale)".format(peak, loop_gain),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+plot(cl.residual, title = "Residual after peak < {} with loop gain {} (linear scale)".format(peak, loop_gain),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False, cmap = plt.cm.jet)
 
 plt.subplot(235)
-plot(cl.model, title = "Final model",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
+plot(cl.model, title = "Final model",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, cmap = plt.cm.jet)
 
 # plt.figure()
 # plot(cl.dirty_beam, title = "Dirty beam",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
 
 cl.add_residual()
 plt.subplot(236)
-plot(cl.cleandmap, title = "Cleaned map (linear scale)",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+plot(cl.cleandmap, title = "Cleaned map (linear scale)",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False, cmap = plt.cm.jet)
 
 
 plt.show()
