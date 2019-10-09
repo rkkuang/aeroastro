@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from utils import plot, imgfft, readimg, imgifft, sample_visibility
 import random
+import scipy.optimize as opt
+from cleaner import Cleaner
 
 # tele1 = Telescope([],[])
 # RC = (500,500)
@@ -142,7 +144,7 @@ tele1.fake_uvcover(RC,sites)
 plt.subplot(231)
 plot(tele1.uvcover, title = "Fake uv coverage of {} sites".format(len(sites)),xlabel = "u (pixel)", ylabel = "v (pixel)", colorbar = True)
 tele1.gen_dirty_beam()
-tele1.dirty_beam = np.fft.ifftshift(tele1.dirty_beam)
+# tele1.dirty_beam = np.fft.ifftshift(tele1.dirty_beam) --> added into gen_dirty_beam() function
 plt.subplot(232)
 plot(tele1.dirty_beam, title = "Dirty beam",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
 
@@ -167,9 +169,113 @@ lenna_map, lenna_map_mag = imgifft(measured_visibility)
 plt.subplot(236)
 plot(lenna_map_mag, title = "Dirty map",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
 
+cl = Cleaner(lenna_map_mag, tele1.dirty_beam)
+plt.figure()
+plt.subplot(221)
+# plt.matshow(cl.model_beam, cmap=plt.cm.gist_earth_r)
+plot(cl.model_beam, title = "Model beam",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
+itertime = 500
+loop_gain = 0.2
+cl.clean(itertime = itertime, loop_gain = loop_gain)
+# plt.imshow(cl.residual)
+plt.subplot(222)
+plot(cl.residual, title = "Residual after {} clean steps with loop gain {}".format(itertime, loop_gain),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
+
+plt.subplot(223)
+plot(cl.model, title = "Final model",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
+
+# plt.figure()
+# plot(cl.dirty_beam, title = "Dirty beam",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
+
+cl.add_residual()
+plt.subplot(224)
+plot(cl.cleandmap, title = "Cleaned map",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
 
 
 plt.show()
+
+
+
+# worked: 
+# from gaussfitter import *
+# Create the gaussian data
+# coresize = 512
+# Xin, Yin = np.mgrid[0:coresize, 0:coresize]
+# # data = gaussian(3, 100, 100, 20, 40)(Xin, Yin) + np.random.random(Xin.shape)
+# # data = tele1.dirty_beam[206:206+coresize, 206: 206+coresize]
+# data = tele1.dirty_beam
+# # plt.figure()
+# plt.matshow(data, cmap=plt.cm.gist_earth_r)
+
+# params = fitgaussian(data)
+# fit = gaussian(*params)
+# fit_res = fit(*np.indices(data.shape))
+# plt.contour(fit_res, cmap=plt.cm.copper)
+# ax = plt.gca()
+# (height, x, y, width_x, width_y) = params
+
+# plt.text(0.95, 0.05, """
+# x : %.1f
+# y : %.1f
+# width_x : %.1f
+# width_y : %.1f""" %(x, y, width_x, width_y),
+#         fontsize=16, horizontalalignment='right',
+#         verticalalignment='bottom', transform=ax.transAxes)
+
+# plt.matshow(fit_res, cmap=plt.cm.gist_earth_r)
+
+
+# plt.show()
+
+# from temp import twoD_Gaussian
+# # 2d gaussian fitting 
+# # Create x and y indices
+# coresize = 100
+
+# x = np.linspace(1, coresize, coresize)
+# y = np.linspace(1, coresize, coresize)
+# x, y = np.meshgrid(x, y)
+
+# #create data
+# # def twoD_Gaussian(xdata_tuple, amplitude, xo, yo, sigma_x, sigma_y, theta, offset):
+# # data = twoD_Gaussian((x, y), 40000, 100, 100, 20, 40, 0, 0)
+# data = tele1.dirty_beam[206:206+coresize, 206: 206+coresize]
+# # print(data.shape)
+# # input(">>>>>>>>>>>>>")
+# # data = data.reshape(RC[0]*RC[1],1)
+# data = data.reshape(-1,1)
+# # print(data.shape)
+# # input(">>>>>>>>>>>>>")
+# # plot twoD_Gaussian data generated above
+# plt.figure()
+# plt.imshow(data.reshape(coresize,coresize))
+# plt.colorbar()
+
+
+# # plt.show()
+# # input(">>>>>>>>>>>")
+
+# # add some noise to the data and try to fit the data generated beforehand
+# initial_guess = (40000,0,0,5,5,0,1)#(3,100,100,20,40,0,10)
+# #amplitude, xo, yo, sigma_x, sigma_y, theta, offset
+
+# # data_noisy = data + 0.2*np.random.normal(size=data.shape)
+# data_noisy = data
+
+# popt, pcov = opt.curve_fit(twoD_Gaussian, (x, y), data_noisy, p0=initial_guess)
+
+# data_fitted = twoD_Gaussian((x, y), *popt)
+
+# fig, ax = plt.subplots(1, 1)
+# # ax.hold(True)
+# ax.imshow(data_noisy.reshape(coresize,coresize), cmap=plt.cm.jet, origin='bottom',
+#     extent=(x.min(), x.max(), y.min(), y.max()))
+# ax.contour(x, y, data_fitted.reshape(coresize,coresize), 8, colors='w')
+# plt.figure()
+# plt.imshow(data_fitted.reshape(coresize,coresize))
+
+# plt.show()
+
 
 
 

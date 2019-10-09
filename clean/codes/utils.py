@@ -2,7 +2,9 @@ import matplotlib.pyplot as plt
 from skimage import exposure
 import cv2
 import numpy as np
-
+import scipy.optimize as opt
+import random
+from scipy import signal
 
 # 设置一下cmap, https://blog.csdn.net/qq_28485501/article/details/82656614
 # plt.imshow(train_images[0], cmap='binary')
@@ -85,24 +87,44 @@ def imgifft(FTimg):
         mag = cv2.magnitude(idft,idft)
     return idft, mag
 
+def gen_point_source(numofpoints, imgsize):
+    resimg = np.zeros(imgsize)
+    for i in range(numofpoints):
+        r = int((0.2+0.8*random.random())*imgsize[0]/1.2)
+        c = int((0.2+0.8*random.random())*imgsize[0]/1.2)
+        resimg[r,c] = 1
+    return resimg
+def img_conv(img, kernel,mode = "same",boundary='symm',fillvalue=0):
+    return signal.convolve2d(img,kernel,mode=mode,boundary=boundary,fillvalue=fillvalue)
+
+
+
+#https://stackoverflow.com/questions/21566379/fitting-a-2d-gaussian-function-using-scipy-optimize-curve-fit-valueerror-and-m
+#python 2 dimensional gaussian fitting
+
+
+
+
+
 
 if __name__ == '__main__':
-    lenna = readimg("../imgs/Lenna.png")
-    print(lenna.shape)
-    # cv2.imshow("Lenna", lenna)
-    # cv2.waitKey(0)
-    # cv2.destroyAllWindows()
-    # plt.figure()
-    # plt.imshow(lenna,cmap='gray')
-    # saveimg(lenna, "../imgs/Lennagray.png")
-    plot(lenna, title = "Lenna img",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+    # lenna = readimg("../imgs/Lenna.png")
+    # print(lenna.shape)
+    # # cv2.imshow("Lenna", lenna)
+    # # cv2.waitKey(0)
+    # # cv2.destroyAllWindows()
+    # # plt.figure()
+    # # plt.imshow(lenna,cmap='gray')
+    # # saveimg(lenna, "../imgs/Lennagray.png")
+    # plot(lenna, title = "Lenna img",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
 
-    lenna_visibility, lenna_visibility_mag = imgfft(lenna)
-    plot(lenna_visibility_mag, title = "FT of Lenna img",xlabel = "u (pixel)", ylabel = "v (pixel)", islog = False, colorbar = True)
+    # lenna_visibility, lenna_visibility_mag = imgfft(lenna)
+    # plot(lenna_visibility_mag, title = "FT of Lenna img",xlabel = "u (pixel)", ylabel = "v (pixel)", islog = False, colorbar = True)
     
-    ifftlenna, ifftlenna_mag = imgifft(lenna_visibility)
-    # plt.figure()
-    # plt.imshow(ifftlenna_mag,cmap='gray')
-    plot(ifftlenna_mag, title = "IFT of LennaFT",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
+    # ifftlenna, ifftlenna_mag = imgifft(lenna_visibility)
+    # # plt.figure()
+    # # plt.imshow(ifftlenna_mag,cmap='gray')
+    # plot(ifftlenna_mag, title = "IFT of LennaFT",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
 
-    plt.show()
+    # plt.show()
+    pass

@@ -35,7 +35,7 @@ class Telescope():
                 if (Row/2-i)**2+(Col/2-j)**2<radius**2:
                     self.uvcover[i,j]=1
         # return self.uvcover
-    
+
     # def plot(self, whichimg, title = "title", xlabel="x", ylabel="y", colorbar = False, islog = False):
     #     plt.figure()
     #     if islog:
@@ -83,6 +83,7 @@ class Telescope():
         # # self.dirty_beam = cv2.magnitude(idft[:,:,0],idft[:,:,1])
 
         _, self.dirty_beam = imgifft(self.uvcover)
+        self.dirty_beam = np.fft.ifftshift(self.dirty_beam)
         # return self.dirty_beam
 
 
