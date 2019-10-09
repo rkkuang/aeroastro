@@ -12,10 +12,10 @@ from gaussfitter import gaussian
 tele1 = Telescope([],[])
 RC = (512,512)
 
-numsites = 150
+numsites = 130
 sites = []
 dangle = 0.1
-angle_arnge = 120
+angle_arnge = 160
 inner = 10
 for i in range(int(numsites/3)):
     sites.append((random.random()*inner,360*random.random(),angle_arnge,dangle))
@@ -32,7 +32,8 @@ plt.subplot(232)
 plot(tele1.dirty_beam, title = "Dirty beam",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
 
 # lenna = readimg("../imgs/Lenna.png")
-point_source = gen_point_source(10, RC)
+num_source = 30
+point_source = gen_point_source(num_source, RC)
 
 #####################################################
 # point source conv with a known_kernel
@@ -49,7 +50,7 @@ noise = 0.01*np.random.normal(size=RC)
 
 point_source += noise
 plt.subplot(233)
-plot(point_source, title = "Point source img cov with a gaussian kernel with some noise\n(True brightness distribution)",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+plot(point_source, title = "{} point sources img cov with a gaussian kernel with some noise\n(True brightness distribution)".format(num_source),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
 
 lenna_visibility, lenna_visibility_mag = imgfft(point_source)
 plt.subplot(234)
@@ -80,16 +81,16 @@ plt.subplot(231)
 plot(tele1.uvcover, title = "Fake uv coverage of {} sites".format(len(sites)),xlabel = "u (pixel)", ylabel = "v (pixel)", colorbar = True)
 
 plt.subplot(232)
-plot(lenna_map_mag, title = "Dirty map",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
+plot(lenna_map_mag, title = "Dirty map (linear scale)",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
 
 
 plt.subplot(233)
 # plt.matshow(cl.model_beam, cmap=plt.cm.gist_earth_r)
 cl.gen_model_beam_byhand(coresize = 512, height=1, center_x=256, center_y=256, width_x=5, width_y=5)
 # plot(cl.model_beam, title = "Model beam",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
-plot(point_source, title = "Point source img cov with a gaussian kernel with some noise\n(True brightness distribution)",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+plot(point_source, title = "{} point sources img cov with a gaussian kernel with some noise\n(True brightness distribution)".format(num_source),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
 
-itertime = 1000
+itertime = 5000
 loop_gain = 0.2
 peak = 1000
 # cl.clean(itertime = itertime, loop_gain = loop_gain, criteria = "max_itertime")
@@ -97,8 +98,8 @@ peak = 1000
 cl.clean(loop_gain = loop_gain, criteria = "peak", peak = peak)
 # plt.imshow(cl.residual)
 plt.subplot(234)
-# plot(cl.residual, title = "Residual after {} clean steps with loop gain {}".format(itertime, loop_gain),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
-plot(cl.residual, title = "Residual after peak < {} with loop gain {}".format(peak, loop_gain),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
+# plot(cl.residual, title = "Residual after {} clean steps with loop gain {} (linear scale)".format(itertime, loop_gain),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True , islog = False)
+plot(cl.residual, title = "Residual after peak < {} with loop gain {} (linear scale)".format(peak, loop_gain),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
 
 plt.subplot(235)
 plot(cl.model, title = "Final model",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
@@ -108,7 +109,7 @@ plot(cl.model, title = "Final model",xlabel = "x (pixel)", ylabel = "y (pixel)",
 
 cl.add_residual()
 plt.subplot(236)
-plot(cl.cleandmap, title = "Cleaned map",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True)
+plot(cl.cleandmap, title = "Cleaned map (linear scale)",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
 
 
 plt.show()

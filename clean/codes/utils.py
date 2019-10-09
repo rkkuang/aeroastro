@@ -13,7 +13,7 @@ from scipy import signal
 def plot(whichimg, title = "title", xlabel="x", ylabel="y", colorbar = False, islog = False, cmap = 'gray'):
     # plt.figure()
     if islog:
-        whichimg = exposure.rescale_intensity(whichimg,in_range=(0,255))
+        # whichimg = exposure.rescale_intensity(whichimg,in_range=(0,255))
         # print(min(whichimg.all()))
         whichimg = exposure.adjust_log(whichimg)
     plt.imshow(whichimg, cmap = cmap)#cmap = plt.cm.gray_r
@@ -90,8 +90,8 @@ def imgifft(FTimg):
 def gen_point_source(numofpoints, imgsize):
     resimg = np.zeros(imgsize)
     for i in range(numofpoints):
-        r = int((0.2+0.8*random.random())*imgsize[0]/1.2)
-        c = int((0.2+0.8*random.random())*imgsize[0]/1.2)
+        r = int((0.05+0.95*random.random())*imgsize[0]/1.2)
+        c = int((0.05+0.95*random.random())*imgsize[0]/1.2)
         resimg[r,c] = 1
     return resimg
 def img_conv(img, kernel,mode = "same",boundary='symm',fillvalue=0):
