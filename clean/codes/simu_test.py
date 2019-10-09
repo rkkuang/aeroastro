@@ -1,7 +1,7 @@
 from telescope import Telescope
 import numpy as np
 import matplotlib.pyplot as plt
-from utils import plot, imgfft, readimg, imgifft
+from utils import plot, imgfft, readimg, imgifft, sample_visibility
 import random
 
 # tele1 = Telescope([],[])
@@ -154,10 +154,9 @@ lenna_visibility, lenna_visibility_mag = imgfft(lenna)
 plt.subplot(234)
 plot(lenna_visibility_mag, title = "FT of Lenna img (Theoretical visibility)",xlabel = "u (pixel)", ylabel = "v (pixel)", islog = False, colorbar = True)
 
-measured_visibility = np.zeros((RC[0],RC[1],2))
-measured_visibility[:,:,0] = lenna_visibility[:,:,0] * tele1.uvcover
-measured_visibility[:,:,1] = lenna_visibility[:,:,1] * tele1.uvcover
-measured_lenna_visibility_mag = lenna_visibility_mag * tele1.uvcover
+
+measured_visibility, measured_lenna_visibility_mag = sample_visibility(lenna_visibility, lenna_visibility_mag, tele1.uvcover)
+
 plt.subplot(235)
 plot(measured_lenna_visibility_mag, title = "Measured visibility after sampling in uv plane",xlabel = "u (pixel)", ylabel = "v (pixel)", islog = False, colorbar = True)
 

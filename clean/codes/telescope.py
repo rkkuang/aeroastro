@@ -24,7 +24,7 @@ class Telescope():
             dtheta = tele[3]/180*np.pi
             for i in np.arange(start_angle,end_angle,dtheta):
                 self.uvcover[int(Row/2-radius*np.sin(i)),int(Col/2+radius*np.cos(i))]=1
-        return self.uvcover
+        # return self.uvcover
     def fake_uvcover2(self, RC, radius):
         # RC is the size of generate uv coverage image, teles are sites in different radiu and angle_position
         Row = RC[0]
@@ -34,7 +34,8 @@ class Telescope():
             for j in range(Col):
                 if (Row/2-i)**2+(Col/2-j)**2<radius**2:
                     self.uvcover[i,j]=1
-        return self.uvcover
+        # return self.uvcover
+    
     # def plot(self, whichimg, title = "title", xlabel="x", ylabel="y", colorbar = False, islog = False):
     #     plt.figure()
     #     if islog:
@@ -82,7 +83,7 @@ class Telescope():
         # # self.dirty_beam = cv2.magnitude(idft[:,:,0],idft[:,:,1])
 
         _, self.dirty_beam = imgifft(self.uvcover)
-        return self.dirty_beam
+        # return self.dirty_beam
 
 
 if __name__ == "__main__":

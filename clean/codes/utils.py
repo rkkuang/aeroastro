@@ -62,6 +62,13 @@ def saveimg(img, savename = "imgname.png"):
 #         mag = dirty_beam
 #     return dirty_beam, mag
 
+def sample_visibility(lenna_visibility, lenna_visibility_mag, uvcover):
+    measured_visibility = np.zeros((uvcover.shape[0],uvcover.shape[1],2))
+    measured_visibility[:,:,0] = lenna_visibility[:,:,0] * uvcover
+    measured_visibility[:,:,1] = lenna_visibility[:,:,1] * uvcover
+    measured_lenna_visibility_mag = lenna_visibility_mag * uvcover
+    return measured_visibility, measured_lenna_visibility_mag
+
 def imgfft(img):
     dft = cv2.dft(np.float32(img),flags=cv2.DFT_COMPLEX_OUTPUT)
     dft_shift = np.fft.fftshift(dft)# --> 将低频部分移动到图像中心
