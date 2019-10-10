@@ -43,12 +43,13 @@ Xin, Yin = np.mgrid[0:kernelsize[0], 0:kernelsize[1]]
 (height, center_x, center_y, width_x, width_y) = (1, kernelsize[0]//2, kernelsize[1]//2, 5, 5)
 known_kernel = gaussian(height, center_x, center_y, width_x, width_y)(Xin, Yin)
 
+
 point_source = img_conv(point_source, known_kernel)
 #####################################################
-
-noise = 0.01*np.random.normal(size=RC)
+noise = 0.05*np.random.normal(size=RC)
 
 point_source += noise
+
 plt.subplot(233)
 plot(point_source, title = "{} point sources img cov with a gaussian kernel with some noise\n(True brightness distribution)".format(num_source),xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
 
