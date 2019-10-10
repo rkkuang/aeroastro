@@ -12,10 +12,10 @@ from gaussfitter import gaussian
 tele1 = Telescope([],[])
 RC = (512,512)
 
-numsites = 200
+numsites = 100
 sites = []
 dangle = 0.1
-angle_arnge = 360
+angle_arnge = 30
 inner = 10
 for i in range(int(numsites/3)):
     sites.append((random.random()*inner,360*random.random(),angle_arnge,dangle))
