@@ -7,10 +7,14 @@ from utils import plot, imgifft
 class Telescope():
     uvcover = None
     dirty_beam = None
-    def __init__(self, poslist, directionlist):
+    earth_omega = 360/24/3600 #degree per second
+    #0.0002 - 512 pixel
+    def __init__(self, poslist, directionlist, angle_per_pixel = 1.0/3600, freq = 10**9):
         self.poslist = poslist
         self.directionlist = directionlist
-    def uvcoverage(self, dt, t0, t1, freq):
+        self.angle_per_pixel = angle_per_pixel # 1.0/3600 --> one arcsec per pixel
+        self.freq = freq # 10**9 --> 1 GHz
+    def uvcoverage(self, dt, t0, t1):
         pass
     def fake_uvcover(self, RC, teles):
         # RC is the size of generate uv coverage image, teles are sites in different radiu and angle_position

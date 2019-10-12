@@ -96,8 +96,8 @@ def gen_point_source(numofpoints, imgsize):
     return resimg
 def img_conv(img, kernel,mode = "same",boundary='symm',fillvalue=0):
     return signal.convolve2d(img,kernel,mode=mode,boundary=boundary,fillvalue=fillvalue)
-
-
+def gen_site(name, East_Longitude, Latitude , X_position, Y_position, Z_position , Lower_Elevation, Upper_Elevation, SEFD, Diameter):
+    return {"name":name,"East_Longitude":East_Longitude,"Latitude":Latitude,"X_position":X_position,"Y_position":Y_position,"Z_position":Z_position,"Lower_Elevation":Lower_Elevation,"Upper_Elevation":Upper_Elevation,"SEFD":SEFD,"Diameter":Diameter}
 
 #https://stackoverflow.com/questions/21566379/fitting-a-2d-gaussian-function-using-scipy-optimize-curve-fit-valueerror-and-m
 #python 2 dimensional gaussian fitting
