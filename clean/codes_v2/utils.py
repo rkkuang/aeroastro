@@ -5,6 +5,7 @@ import numpy as np
 import scipy.optimize as opt
 import random
 from scipy import signal
+from mpl_toolkits.mplot3d import Axes3D  # 空间三维画图
 
 # 设置一下cmap, https://blog.csdn.net/qq_28485501/article/details/82656614
 # plt.imshow(train_images[0], cmap='binary')
@@ -17,6 +18,43 @@ def plot(whichimg, title = "title", xlabel="x", ylabel="y", colorbar = False, is
         # print(min(whichimg.all()))
         whichimg = exposure.adjust_log(whichimg)
     plt.imshow(whichimg, cmap = cmap)#cmap = plt.cm.gray_r
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    if colorbar:
+        plt.colorbar()
+def plot_scatter(data, title = "title", xlabel="x", ylabel="y",zlabel = 'z',dim = 3, plotlabel = False, colorbar = False, islog = False, cmap = 'gray'):
+    # plt.figure()
+    if islog:
+        # whichimg = exposure.rescale_intensity(whichimg,in_range=(0,255))
+        # print(min(whichimg.all()))
+        whichimg = exposure.adjust_log(whichimg)
+    if not plotlabel:
+        plt.scatter(data[0],data[1],s=1,c="b")#cmap = plt.cm.gray_r
+    else:
+        if dim == 2:
+            for site in data:
+                ax = plt.gca()
+                plt.scatter(site["U"],site["V"],s=2,marker='o',label=site["name"])
+                plt.ticklabel_format(axis='x', style='sci')
+                plt.ticklabel_format(axis='y', style='sci')
+                #http://www.cocoachina.com/articles/83405
+                #https://blog.csdn.net/junxinwoxin/article/details/86610914
+                ax.yaxis.major.formatter.set_powerlimits((0,1))## 将坐标轴的base number设置为一位。
+                ax.xaxis.major.formatter.set_powerlimits((0,1))
+
+                plt.axis('square')
+        else:
+            fig = plt.figure()
+            ax = Axes3D(fig)
+            for site in data:
+                #https://blog.csdn.net/qq_41149269/article/details/81774026
+                ax.scatter(site["U"],site["V"],site["W"],s=2,marker='o',label=site["name"])
+                # plt.zlabel(zlabel)
+            ax.set_zlabel(zlabel)
+
+
+        plt.legend()#loc = 'upper right'
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
     plt.title(title)
@@ -98,6 +136,19 @@ def img_conv(img, kernel,mode = "same",boundary='symm',fillvalue=0):
     return signal.convolve2d(img,kernel,mode=mode,boundary=boundary,fillvalue=fillvalue)
 def gen_site(name, East_Longitude, Latitude , X_position, Y_position, Z_position , Lower_Elevation, Upper_Elevation, SEFD, Diameter):
     return {"name":name,"East_Longitude":East_Longitude,"Latitude":Latitude,"X_position":X_position,"Y_position":Y_position,"Z_position":Z_position,"Lower_Elevation":Lower_Elevation,"Upper_Elevation":Upper_Elevation,"SEFD":SEFD,"Diameter":Diameter}
+
+def XYZ2uvw(site,Hdec):
+    # Hdec = (H,Dec)
+    XYZ = np.array(site)
+    H = Hdec[0]*np.pi/180
+    Dec = Hdec[1]*np.pi/180
+    HdecMatrix = np.array([[np.sin(H),np.cos(H),0],
+        [-np.sin(Dec)*np.cos(H),np.sin(Dec)*np.sin(H),np.cos(Dec)],
+        [np.cos(Dec)*np.cos(H),-np.cos(Dec)*np.sin(H),np.sin(Dec)]]
+        )
+    return np.dot(HdecMatrix, XYZ) # or np.dot(HdecMatrix, XYZ.transpose()), the same result
+
+
 
 #https://stackoverflow.com/questions/21566379/fitting-a-2d-gaussian-function-using-scipy-optimize-curve-fit-valueerror-and-m
 #python 2 dimensional gaussian fitting

@@ -2,7 +2,9 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 # from skimage import exposure
-from utils import plot, imgifft
+from utils import plot, imgifft, XYZ2uvw, plot_scatter, gen_site
+
+SPEEDOFLIGHT = 3*10**8 # m/s
 
 class Telescope():
     uvcover = None
@@ -16,6 +18,62 @@ class Telescope():
         self.freq = freq # 10**9 --> 1 GHz
     def uvcoverage(self, dt, t0, t1):
         pass
+    def uvXYZ(self, sites=[(-768713.9637, -5988541.7982, 2063275.9472),(5088967.9, -301681.6, 3825015.8)], center=(-768713.9637, -5988541.7982, 2063275.9472), H=(0, 24, 1/12, 1/6,  6/3600), Del=60, freq=1*10**9):
+        # sites: [(X1,Y1,Z1), (Z2,Y2,Z2) in meter
+        # center, center site's (X,Y,Z) in meter
+        # H: (H0,H1,lH,dH) in hour (15 degrees per hour), e.g. (6.1, 7.1, 1/12, 1/6) 表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每6秒采一次样)， 采完等待 10分钟，之后再采5分钟
+        # Dec: Declination, in degree
+        # freq: frequency in Hz
+        u = []
+        v = []
+        w = []
+        h = H[0]
+        wavelength = SPEEDOFLIGHT/freq
+        for site in sites:
+            # site = (site[i]-center[i] for i in range(3)) # wrong! can not code like this
+            #<generator object <genexpr> at 0x7ff25457be60>
+            # site = (i/wavelength for i in site)
+            site[0],site[1],site[2] = site[0]-center[0],site[1]-center[1],site[2]-center[2]
+            site[0],site[1],site[2] = site[0]/wavelength,site[1]/wavelength,site[2]/wavelength
+        while h<H[1]:
+            temph = h
+            for site in sites:
+                for i in np.arange(0,H[2],H[4]):
+                    uvw = XYZ2uvw(site,(temph*15, Dec))
+                    u.append(uvw[0])
+                    v.append(uvw[1])
+                    w.append(uvw[2])
+                temph += i
+            h += (H[2]+H[3])
+        return (u,v,w)
+    def uvArray(self, Array=[], center=None, H=(0, 24, 1/12, 1/6,  6/3600), Del=60, freq=1*10**9):
+        # Array: [ALMA, PDB], ALMA is a dict contains information of ALMA
+        # center, center site dict
+        # H: (H0,H1,lH,dH) in hour (15 degrees per hour), e.g. (6.1, 7.1, 1/12, 1/6) 表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每6秒采一次样)， 采完等待 10分钟，之后再采5分钟
+        # Dec: Declination, in degree
+        # freq: frequency in Hz
+        u = []
+        v = []
+        w = []
+        h = H[0]
+        wavelength = SPEEDOFLIGHT/freq
+        for site in Array:
+            site["X_position"],site["Y_position"],site["Z_position"] = site["X_position"]-center["X_position"],site["Y_position"]-center["Y_position"],site["Z_position"]-center["Z_position"]
+            site["X_position"],site["Y_position"],site["Z_position"] = site["X_position"]/wavelength, site["Y_position"]/wavelength, site["Z_position"]/wavelength
+            site["U"] = []
+            site["V"] = []
+            site["W"] = []
+        while h<H[1]:
+            temph = h
+            for site in Array:
+                for i in np.arange(0,H[2],H[4]):
+                    uvw = XYZ2uvw((site["X_position"],site["Y_position"],site["Z_position"]),(temph*15, Dec))
+                    u.append(uvw[0]), site["U"].append(uvw[0])
+                    v.append(uvw[1]), site["V"].append(uvw[1])
+                    w.append(uvw[2]), site["W"].append(uvw[2])
+                temph += i
+            h += (H[2]+H[3])
+        return (u,v,w), Array
     def fake_uvcover(self, RC, teles):
         # RC is the size of generate uv coverage image, teles are sites in different radiu and angle_position
         Row = RC[0]
@@ -101,19 +159,79 @@ if __name__ == "__main__":
     # tele1 = Telescope(poslist,directionlist)
     # uvcover = tele1.uvcoverage(dt, t0, t1, freq)
 
+    # tele1 = Telescope([],[])
+    # RC = (500,500)
+    # site1 = (100,0,120,0.2)
+    # site2 = (200,240,120,0.2)
+    # site3 = (150,60,120,0.2)
+    # tele1.fake_uvcover(RC,(site1,site2,site3))
+    # plot(tele1.uvcover, title = "Fake uv coverage of 3 sites",xlabel = "u (pixel)",ylabel =  "v (pixel)")
+    # tele1.gen_dirty_beam()
+    # plot(tele1.dirty_beam, title = "Dirty beam of 3 sites",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+
+    # tele1.fake_uvcover2(RC, 20)
+    # plot(tele1.uvcover, title = "Fake uv coverage corresponding to a Gaussian dirty beam",xlabel = "u (pixel)", ylabel = "v (pixel)",)
+    # tele1.gen_dirty_beam()
+    # plot(tele1.dirty_beam, title = "Gaussian dirty beam",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+
+    # plt.show()
+
+    LMT = gen_site("LMT", "-97:18:53", "18:59:06", -768713.9637, -5988541.7982, 2063275.9472, 15, 85, 560, 50)
+    PV = gen_site("PV", "-3:23:33.8", "37:03:58.2", 5088967.9, -301681.6, 3825015.8, 15, 85, 2900, 30)
+    ALMA50 = gen_site("ALMA50", "-67:45:11.4", "-23:01:09.4", 2225037.1851, -5441199.162, -2479303.4629, 15, 85, 110, 84.7)
+    #SMTO = gen_site("SMTO", "-109:52:19", "32:42:06", -1828796.2, -5054406.8, 3427865.2, 15, 85, 11900, 10)
+    SMT = gen_site("SMT", "-109:52:19", "32:42:06", -1828796.2, -5054406.8, 3427865.2, 15, 85, 11000, 10)
+    Hawaii8 = gen_site("Hawaii8", "-155:28:40.7", "19:49:27.4", -5464523.4, -2493147.08, 2150611.75, 15, 85, 4900, 20.8)
+    #PdBI = gen_site("PdBI", "05:54:28.5", "44:38:02.0", 4523998.4, 468045.24, 4460309.76, 15, 85, 1600, 36,7)
+    PDB = gen_site("PDB", "05:54:28.5", "44:38:02.0", 4523998.4, 468045.24, 4460309.76, 15, 85, 5200, 36.7)
+    SPT = gen_site("SPT", "-000:00:00.0", "-90:00:00", 0, 0, -6359587.3, 15, 85, 7300, 12)
+    GLT = gen_site("GLT", "72:35:46.4", "38:25:19.1", 1500692, -1191735, 6066409, 15, 85, 4744, 12)
+    CARMA8 = gen_site("CARMA8", "-118:08:30.3", "37:16:49.6", -2397431.3, -4482018.9, 3843524.5, 15, 85, 3500, 26.9)
+    SMA = gen_site("SMA", "-155:28:40.7", "19:49:27.4", -5464523.4, -2493147.08, 2150611.75, 15, 85, 4000, 20.8)
+    Array = [LMT,PV,ALMA50,SMT,Hawaii8,GLT,CARMA8,SMA,PDB]
+
+
+    # 用uvXYZ 生成 UV 覆盖, 并用plot_scatter 画图的测试程序
+    # uvXYZ(self, sites, center, H, delta, lambda)
+    # tele1 = Telescope([],[])
+    # sites = []
+    # for site in Array:
+    #     XYZ = [site["X_position"],site["Y_position"],site["Z_position"]]
+    #     sites.append(XYZ)
+    # center = sites[0]
+    # H = (0, 2, 1/12, 1/6, 5/3600)#表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每5秒采一次样)， 采完等待 10分钟，之后再采5分钟
+    # Dec = 60 #Declination, 赤纬，度
+    # freq = 227.297 * 10**9 # 1 GHz, 227297 MHz
+    # UVW = tele1.uvXYZ(sites, center, H, Dec, freq)
+    # x = np.array(UVW[0])/10**3
+    # y = np.array(UVW[1])/10**3
+    # plot_scatter((x,y), title = "UV coverage",xlabel = r"u ($k\lambda$)", ylabel = r"v ($k\lambda$)")
+    # plt.show()
+
+    # 用uvArray 生成 UV 覆盖, 并用plot_scatter 画图(带legend)的测试程序
+    # uvArray(self, Array, center, H, delta, lambda)
+
+    # The frequency range available to ALMA is divided into different receiver bands. 
+    # Data can only be taken in one band at a time. These bands range from band 3, 
+    # starting at 84 GHz, to band 10, ending at ~950 GHz. For comparison, 
+    # a frequency of 300 GHz translates to a wavelength of approximately 1mm.
+    
+    # ============================================================
     tele1 = Telescope([],[])
-    RC = (500,500)
-    site1 = (100,0,120,0.2)
-    site2 = (200,240,120,0.2)
-    site3 = (150,60,120,0.2)
-    tele1.fake_uvcover(RC,(site1,site2,site3))
-    plot(tele1.uvcover, title = "Fake uv coverage of 3 sites",xlabel = "u (pixel)",ylabel =  "v (pixel)")
-    tele1.gen_dirty_beam()
-    plot(tele1.dirty_beam, title = "Dirty beam of 3 sites",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
+    center = ALMA50#Array[0]
+    H = (6, 18, 1/12, 1/6, 10/3600)#表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每5秒采一次样)， 采完等待 10分钟，之后再采5分钟
+    Dec = 34 #Declination, 赤纬，度
+    freq = 227.297 * 10**9 # 1 GHz, 227297 MHz
+    UVW,resuvArray = tele1.uvArray(Array, center, H, Dec, freq)
+    for site in resuvArray:
+        site["U"] = np.array(site["U"])/10**3
+        site["V"] = np.array(site["V"])/10**3
+        site["W"] = np.array(site["W"])/10**3
 
-    tele1.fake_uvcover2(RC, 20)
-    plot(tele1.uvcover, title = "Fake uv coverage corresponding to a Gaussian dirty beam",xlabel = "u (pixel)", ylabel = "v (pixel)",)
-    tele1.gen_dirty_beam()
-    plot(tele1.dirty_beam, title = "Gaussian dirty beam",xlabel = "x (pixel)", ylabel = "y (pixel)", colorbar = True, islog = False)
-
+    title1 = "UV coverage with center site: {} at {:.1f} GHz\n".format(center["name"],freq/10**9)
+    title2 = r"Hour angle: ${}^h$ $\sim$ ${}^h$, Declination: ${}^\circ$".format(H[0],H[1],Dec)
+    # x = np.array(UVW[0])/10**3
+    # y = np.array(UVW[1])/10**3
+    plot_scatter(resuvArray, title = title1+title2 ,dim=2 ,xlabel = r"u ($k\lambda$)",zlabel = r"w ($k\lambda$)",plotlabel = True, ylabel = r"v ($k\lambda$)")
+    # plot_scatter((x,y), title = "UV coverage",xlabel = r"u ($k\lambda$)", ylabel = r"v ($k\lambda$)")
     plt.show()
