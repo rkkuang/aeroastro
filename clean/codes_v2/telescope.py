@@ -36,14 +36,14 @@ class Telescope():
             site[0],site[1],site[2] = site[0]-center[0],site[1]-center[1],site[2]-center[2]
             site[0],site[1],site[2] = site[0]/wavelength,site[1]/wavelength,site[2]/wavelength
         while h<H[1]:
-            temph = h
             for site in sites:
+                temph = h
                 for i in np.arange(0,H[2],H[4]):
                     uvw = XYZ2uvw(site,(temph*15, Dec))
                     u.append(uvw[0])
                     v.append(uvw[1])
                     w.append(uvw[2])
-                temph += i
+                    temph = h + i# temph += i, is wrong
             h += (H[2]+H[3])
         return (u,v,w)
     def uvArray(self, Array=[], center=None, H=(0, 24, 1/12, 1/6,  6/3600), Del=60, freq=1*10**9):
@@ -64,14 +64,14 @@ class Telescope():
             site["V"] = []
             site["W"] = []
         while h<H[1]:
-            temph = h
             for site in Array:
+                temph = h
                 for i in np.arange(0,H[2],H[4]):
                     uvw = XYZ2uvw((site["X_position"],site["Y_position"],site["Z_position"]),(temph*15, Dec))
                     u.append(uvw[0]), site["U"].append(uvw[0])
                     v.append(uvw[1]), site["V"].append(uvw[1])
                     w.append(uvw[2]), site["W"].append(uvw[2])
-                temph += i
+                    temph = h + i# temph += i, is wrong
             h += (H[2]+H[3])
         return (u,v,w), Array
     def fake_uvcover(self, RC, teles):
@@ -215,12 +215,12 @@ if __name__ == "__main__":
     # Data can only be taken in one band at a time. These bands range from band 3, 
     # starting at 84 GHz, to band 10, ending at ~950 GHz. For comparison, 
     # a frequency of 300 GHz translates to a wavelength of approximately 1mm.
-    
+
     # ============================================================
     tele1 = Telescope([],[])
     center = ALMA50#Array[0]
-    H = (6, 18, 1/12, 1/6, 10/3600)#表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每5秒采一次样)， 采完等待 10分钟，之后再采5分钟
-    Dec = 34 #Declination, 赤纬，度
+    H = (0, 6, 1/3, 1/2, 1/3600)#表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每5秒采一次样)， 采完等待 10分钟，之后再采5分钟
+    Dec = 60 #Declination, 赤纬，度
     freq = 227.297 * 10**9 # 1 GHz, 227297 MHz
     UVW,resuvArray = tele1.uvArray(Array, center, H, Dec, freq)
     for site in resuvArray:
@@ -230,8 +230,8 @@ if __name__ == "__main__":
 
     title1 = "UV coverage with center site: {} at {:.1f} GHz\n".format(center["name"],freq/10**9)
     title2 = r"Hour angle: ${}^h$ $\sim$ ${}^h$, Declination: ${}^\circ$".format(H[0],H[1],Dec)
+    plot_scatter(resuvArray, title = title1+title2 ,dim=2 ,xlabel = r"u ($k\lambda$)",zlabel = r"w ($k\lambda$)",plotlabel = True, ylabel = r"v ($k\lambda$)")
     # x = np.array(UVW[0])/10**3
     # y = np.array(UVW[1])/10**3
-    plot_scatter(resuvArray, title = title1+title2 ,dim=2 ,xlabel = r"u ($k\lambda$)",zlabel = r"w ($k\lambda$)",plotlabel = True, ylabel = r"v ($k\lambda$)")
     # plot_scatter((x,y), title = "UV coverage",xlabel = r"u ($k\lambda$)", ylabel = r"v ($k\lambda$)")
     plt.show()

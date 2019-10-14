@@ -30,12 +30,20 @@ def plot_scatter(data, title = "title", xlabel="x", ylabel="y",zlabel = 'z',dim 
         # print(min(whichimg.all()))
         whichimg = exposure.adjust_log(whichimg)
     if not plotlabel:
+        ax = plt.gca()
         plt.scatter(data[0],data[1],s=1,c="b")#cmap = plt.cm.gray_r
+        plt.axis('square')
+        plt.ticklabel_format(axis='x', style='sci')
+        plt.ticklabel_format(axis='y', style='sci')
+        #http://www.cocoachina.com/articles/83405
+        #https://blog.csdn.net/junxinwoxin/article/details/86610914
+        ax.yaxis.major.formatter.set_powerlimits((0,1))## 将坐标轴的base number设置为一位。
+        ax.xaxis.major.formatter.set_powerlimits((0,1))
     else:
         if dim == 2:
             for site in data:
                 ax = plt.gca()
-                plt.scatter(site["U"],site["V"],s=2,marker='o',label=site["name"])
+                plt.scatter(site["U"],site["V"],s=1,marker='o',label=site["name"])
                 plt.ticklabel_format(axis='x', style='sci')
                 plt.ticklabel_format(axis='y', style='sci')
                 #http://www.cocoachina.com/articles/83405
