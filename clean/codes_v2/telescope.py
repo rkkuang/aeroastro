@@ -2,7 +2,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import cv2
 # from skimage import exposure
-from utils import plot, imgifft, XYZ2uvw, plot_scatter, gen_site
+from utils import plot, imgifft, XYZ2uvw, plot_scatter, gen_site, plot_scatter_Baseline
 
 SPEEDOFLIGHT = 3*10**8 # m/s
 
@@ -52,6 +52,7 @@ class Telescope():
         # H: (H0,H1,lH,dH) in hour (15 degrees per hour), e.g. (6.1, 7.1, 1/12, 1/6) 表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每6秒采一次样)， 采完等待 10分钟，之后再采5分钟
         # Dec: Declination, in degree
         # freq: frequency in Hz
+        # this is wrong, should use baseline
         u = []
         v = []
         w = []
@@ -74,6 +75,49 @@ class Telescope():
                     temph = h + i# temph += i, is wrong
             h += (H[2]+H[3])
         return (u,v,w), Array
+    def uvArray_Baseline(self, Array=[], center=None, H=(0, 24, 1/12, 1/6,  6/3600), Del=60, freq=1*10**9):
+        # Array: [ALMA, PDB], ALMA is a dict contains information of ALMA
+        # center, center site dict
+        # H: (H0,H1,lH,dH) in hour (15 degrees per hour), e.g. (6.1, 7.1, 1/12, 1/6) 表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每6秒采一次样)， 采完等待 10分钟，之后再采5分钟
+        # Dec: Declination, in degree
+        # freq: frequency in Hz
+        u = []
+        v = []
+        w = []
+        
+        Baselines_uv = {}
+        wavelength = SPEEDOFLIGHT/freq
+        ploted = []
+        for center in Array:
+            h = H[0]
+            ploted.append(center)
+            for site in Array:
+                if site not in ploted:
+                    Baselines_uv[center["name"]+"-"+site["name"]] = {}
+                    Baselines_uv[center["name"]+"-"+site["name"]]["U"] = []
+                    Baselines_uv[center["name"]+"-"+site["name"]]["V"] = []
+                    Baselines_uv[center["name"]+"-"+site["name"]]["W"] = []
+            while h<H[1]:
+                for site in Array:
+                    if site not in ploted:
+                        temph = h
+                        x,y,z = site["X_position"]-center["X_position"],site["Y_position"]-center["Y_position"],site["Z_position"]-center["Z_position"]
+                        x,y,z = x/wavelength, y/wavelength, z/wavelength
+                        x2,y2,z2 = -x,-y,-z
+                        for i in np.arange(0,H[2],H[4]):
+                            # site1 - site2
+                            uvw = XYZ2uvw((x,y,z),(temph*15, Dec))
+                            u.append(uvw[0]), Baselines_uv[center["name"]+"-"+site["name"]]["U"].append(uvw[0])
+                            v.append(uvw[1]), Baselines_uv[center["name"]+"-"+site["name"]]["V"].append(uvw[1])
+                            w.append(uvw[2]), Baselines_uv[center["name"]+"-"+site["name"]]["W"].append(uvw[2])
+                            # site2 - site1
+                            uvw = XYZ2uvw((x2,y2,z2),(temph*15, Dec))
+                            u.append(uvw[0]), Baselines_uv[center["name"]+"-"+site["name"]]["U"].append(uvw[0])
+                            v.append(uvw[1]), Baselines_uv[center["name"]+"-"+site["name"]]["V"].append(uvw[1])
+                            w.append(uvw[2]), Baselines_uv[center["name"]+"-"+site["name"]]["W"].append(uvw[2])
+                            temph = h + i# temph += i, is wrong
+                h += (H[2]+H[3])
+        return (u,v,w), Baselines_uv
     def fake_uvcover(self, RC, teles):
         # RC is the size of generate uv coverage image, teles are sites in different radiu and angle_position
         Row = RC[0]
@@ -217,20 +261,44 @@ if __name__ == "__main__":
     # a frequency of 300 GHz translates to a wavelength of approximately 1mm.
 
     # ============================================================
+    # tele1 = Telescope([],[])
+    # center = ALMA50#Array[0]
+    # H = (0, 6, 1/3, 1/2, 1/3600)#表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每5秒采一次样)， 采完等待 10分钟，之后再采5分钟
+    # Dec = 60 #Declination, 赤纬，度
+    # freq = 227.297 * 10**9 # 1 GHz, 227297 MHz
+    # UVW,resuvArray = tele1.uvArray(Array, center, H, Dec, freq)
+    # for site in resuvArray:
+    #     site["U"] = np.array(site["U"])/10**3
+    #     site["V"] = np.array(site["V"])/10**3
+    #     site["W"] = np.array(site["W"])/10**3
+
+    # title1 = "UV coverage with center site: {} at {:.1f} GHz\n".format(center["name"],freq/10**9)
+    # title2 = r"Hour angle: ${}^h$ $\sim$ ${}^h$, Declination: ${}^\circ$".format(H[0],H[1],Dec)
+    # plot_scatter(resuvArray, title = title1+title2 ,dim=2 ,xlabel = r"u ($k\lambda$)",zlabel = r"w ($k\lambda$)",plotlabel = True, ylabel = r"v ($k\lambda$)")
+    # # x = np.array(UVW[0])/10**3
+    # # y = np.array(UVW[1])/10**3
+    # # plot_scatter((x,y), title = "UV coverage",xlabel = r"u ($k\lambda$)", ylabel = r"v ($k\lambda$)")
+    # plt.show()
+
+    # 用uvArray_Baseline 生成 UV 覆盖, 并用plot_scatter 画图(带legend)的测试程序
+    # Array = [LMT,PV,ALMA50,SMT,Hawaii8,GLT,CARMA8,SMA,PDB]
+    Array = [LMT,PV,ALMA50,SMT,Hawaii8,GLT]
     tele1 = Telescope([],[])
     center = ALMA50#Array[0]
     H = (0, 6, 1/3, 1/2, 1/3600)#表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每5秒采一次样)， 采完等待 10分钟，之后再采5分钟
     Dec = 60 #Declination, 赤纬，度
     freq = 227.297 * 10**9 # 1 GHz, 227297 MHz
-    UVW,resuvArray = tele1.uvArray(Array, center, H, Dec, freq)
-    for site in resuvArray:
-        site["U"] = np.array(site["U"])/10**3
-        site["V"] = np.array(site["V"])/10**3
-        site["W"] = np.array(site["W"])/10**3
+    UVW, Baselines_uv = tele1.uvArray_Baseline(Array, [], H, Dec, freq)
+    # for site in resuvArray:
+    #     site["U"] = np.array(site["U"])/10**3
+    #     site["V"] = np.array(site["V"])/10**3
+    #     site["W"] = np.array(site["W"])/10**3
+    
 
-    title1 = "UV coverage with center site: {} at {:.1f} GHz\n".format(center["name"],freq/10**9)
+
+    title1 = "UV coverage of sites: {} at {:.1f} GHz\n".format(len(Array),freq/10**9)
     title2 = r"Hour angle: ${}^h$ $\sim$ ${}^h$, Declination: ${}^\circ$".format(H[0],H[1],Dec)
-    plot_scatter(resuvArray, title = title1+title2 ,dim=2 ,xlabel = r"u ($k\lambda$)",zlabel = r"w ($k\lambda$)",plotlabel = True, ylabel = r"v ($k\lambda$)")
+    plot_scatter_Baseline(Baselines_uv, title = title1+title2 ,dim=2 ,xlabel = r"u ($\lambda$)",zlabel = r"w ($\lambda$)",plotlabel = True, ylabel = r"v ($\lambda$)")
     # x = np.array(UVW[0])/10**3
     # y = np.array(UVW[1])/10**3
     # plot_scatter((x,y), title = "UV coverage",xlabel = r"u ($k\lambda$)", ylabel = r"v ($k\lambda$)")

@@ -69,6 +69,36 @@ def plot_scatter(data, title = "title", xlabel="x", ylabel="y",zlabel = 'z',dim 
     if colorbar:
         plt.colorbar()
 
+def plot_scatter_Baseline(data, title = "title", xlabel="x", ylabel="y",zlabel = 'z',dim = 3, plotlabel = False, colorbar = False, islog = False, cmap = 'gray'):
+    if dim == 2:
+        for key,value in data.items():
+            ax = plt.gca()
+            plt.scatter(value["U"],value["V"],s=1,marker='o',label=key)
+            plt.ticklabel_format(axis='x', style='sci')
+            plt.ticklabel_format(axis='y', style='sci')
+            #http://www.cocoachina.com/articles/83405
+            #https://blog.csdn.net/junxinwoxin/article/details/86610914
+            ax.yaxis.major.formatter.set_powerlimits((0,1))## 将坐标轴的base number设置为一位。
+            ax.xaxis.major.formatter.set_powerlimits((0,1))
+            plt.axis('square')
+    else:
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        for site in data:
+            #https://blog.csdn.net/qq_41149269/article/details/81774026
+            ax.scatter(site["U"],site["V"],site["W"],s=2,marker='o',label=site["name"])
+            # plt.zlabel(zlabel)
+        ax.set_zlabel(zlabel)
+
+
+    plt.legend()#loc = 'upper right'
+    plt.xlabel(xlabel)
+    plt.ylabel(ylabel)
+    plt.title(title)
+    if colorbar:
+        plt.colorbar()
+
+
 # cv2.IMREAD_COLOR：加载彩色图像。图像的任何透明度都将被忽略。这是默认标志。 flags=1
 # cv2.IMREAD_GRAYSCALE：以灰度模式加载图像 flags=0
 # cv2.IMREAD_UNCHANGED：加载包含Alpha通道的图像 flags=-1
