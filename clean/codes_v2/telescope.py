@@ -296,7 +296,7 @@ if __name__ == "__main__":
     
 
 
-    title1 = "UV coverage of sites: {} at {:.1f} GHz\n".format(len(Array),freq/10**9)
+    title1 = "UV coverage of {} sites at {:.1f} GHz\n".format(len(Array),freq/10**9)
     title2 = r"Hour angle: ${}^h$ $\sim$ ${}^h$, Declination: ${}^\circ$".format(H[0],H[1],Dec)
     plot_scatter_Baseline(Baselines_uv, title = title1+title2 ,dim=2 ,xlabel = r"u ($\lambda$)",zlabel = r"w ($\lambda$)",plotlabel = True, ylabel = r"v ($\lambda$)")
     # x = np.array(UVW[0])/10**3
