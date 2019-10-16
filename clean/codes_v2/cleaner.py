@@ -8,10 +8,13 @@ class Cleaner():
     cleandmap = None
     # brightness = None
     # uvcover = None
-    def __init__(self, dirty_map, dirty_beam, model_beam_para):
+    def __init__(self, dirty_map, dirty_beam, model_beam_para, Total_flux_density):
         self.dirty_map = dirty_map
         self.dirty_beam = dirty_beam
         self.residual = dirty_map
+        self.Total_flux_density=Total_flux_density
+        self.total_subed_flux = 0
+        self.total_model_flux = 0
         # self.model_beam = np.zeros(self.dirty_beam.shape)
         # model_beam is usually an elliptical Gaussian fitted to the central lobe of the dirty beam
         (coresize, height, center_x, center_y, width_x, width_y) = model_beam_para
@@ -23,7 +26,7 @@ class Cleaner():
         # self.gen_model_beam_from_dirty_beam()
         self.model_beam = self.normalize_img(self.model_beam)
         self.model = np.zeros((self.dirty_map.shape[0],self.dirty_map.shape[1]))
-    def clean(self, itertime = 10, loop_gain = 0.1, criteria = "max_itertime", minrms = 10, peak = 1000):
+    def clean(self, itertime = 10, loop_gain = 0.1, criteria = "max_itertime", minrms = 10, peak = 1):
         #self.dirty_map
         # self.residual = self.dirty_map
         if criteria == "max_itertime":
@@ -39,6 +42,7 @@ class Cleaner():
             pass
         # return self.residual, self.model_beam, self.cleand_map
         # do not need return
+        # self.residual = self.residual * (self.Total_flux_density)/np.sum(self.residual)
     def clean_once(self, loop_gain = 0.1):
         # uodate self.residual
         # do not need return
@@ -46,15 +50,57 @@ class Cleaner():
         #1. Find the strength and position of the peak (i.e., of the greatest absolute intensity) in the dirty image
         peak_value, position = self.find_peak(self.residual)
         #2. Subtract from the dirty image, at the position of the peak, the dirty beam B multiplied by the peak strength and a damping factor
-        self.residual -= loop_gain*peak_value*self.gen_tobe_sub(position, self.dirty_beam)
-        self.residual[self.residual<0] = 0 
-        self.model += loop_gain*peak_value*self.gen_tobe_sub(position, self.model_beam)
+        tobesub_residual = loop_gain*peak_value*self.gen_tobe_sub(position, self.dirty_beam)
+
+        tempresidual = self.residual - tobesub_residual
+        tempresidual[tempresidual<0] = 0
+        self.total_subed_flux += np.sum(self.residual-tempresidual)
+        self.residual = tempresidual
+
+
+        tobeadd_model = loop_gain*peak_value*self.gen_tobe_sub(position, self.model_beam)
+        self.model += tobeadd_model
+        
+        self.total_model_flux += np.sum(tobeadd_model)
+
+        # self.residual = self.residual * (self.Total_flux_density - self.total_subed_flux)/np.sum(self.residual)
+        # self.model = self.model * (self.total_subed_flux)/np.sum(self.model)
+
+    # clean normalize with total flux density
+    # def clean_once(self, loop_gain = 0.1):
+    #     # uodate self.residual
+    #     # do not need return
+
+    #     #1. Find the strength and position of the peak (i.e., of the greatest absolute intensity) in the dirty image
+    #     peak_value, position = self.find_peak(self.residual)
+    #     #2. Subtract from the dirty image, at the position of the peak, the dirty beam B multiplied by the peak strength and a damping factor
+    #     tobesub_residual = loop_gain*peak_value*self.gen_tobe_sub(position, self.dirty_beam)
+    #     # self.residual -= tobesub_residual
+    #     # self.residual[self.residual<0] = 0
+
+    #     tempresidual = self.residual - tobesub_residual
+    #     # 
+    #     tempresidual[tempresidual<0] = 0
+    #     self.total_subed_flux += np.sum(self.residual-tempresidual)
+    #     self.residual = tempresidual
+
+
+    #     tobeadd_model = loop_gain*peak_value*self.gen_tobe_sub(position, self.model_beam)
+    #     self.model += tobeadd_model
+        
+    #     self.total_model_flux += np.sum(tobeadd_model)
+
+    #     self.residual = self.residual * (self.Total_flux_density - self.total_subed_flux)/np.sum(self.residual)
+    #     self.model = self.model * (self.total_subed_flux)/np.sum(self.model)
 
         # 3. Go to (1) unless any remaining peak is below some user-specified level. The search for peaks may be constrained to specified areas of the image, called `CLEAN' windows.
         # 4. Convolve the accumulated point source model with an idealized `CLEAN' beam (usually an elliptical Gaussian fitted to the central lobe of the dirty beam).
         # 5. Add the residuals of the dirty image to the `CLEAN' image.
     def add_residual(self):
+        # cl.residual = cl.residual * (Total_flux_density - tele1.total_subed_flux)/np.sum(cl.residual)
         self.cleandmap = self.residual + self.model
+        self.cleandmap = self.cleandmap * self.Total_flux_density / np.sum(self.cleandmap)
+        print("restored total flux: {} Jy".format(np.sum(self.cleandmap)))
     def find_peak(self, beam_or_map, clean_window = [(0,0),(512,512)]):
         #https://thispointer.com/find-max-value-its-index-in-numpy-array-numpy-amax/
         # beam_or_map[0:512,0:512]

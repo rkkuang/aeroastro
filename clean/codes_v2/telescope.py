@@ -75,7 +75,7 @@ class Telescope():
                     temph = h + i# temph += i, is wrong
             h += (H[2]+H[3])
         return (u,v,w), Array
-    def uvArray_Baseline(self, Array=[], center=None, H=(0, 24, 1/12, 1/6,  6/3600), Del=60, freq=1*10**9):
+    def uvArray_Baseline(self, Array=[], center=None, H=(0, 24, 1/12, 1/6,  6/3600), Dec=60, freq=1*10**9):
         # Array: [ALMA, PDB], ALMA is a dict contains information of ALMA
         # center, center site dict
         # H: (H0,H1,lH,dH) in hour (15 degrees per hour), e.g. (6.1, 7.1, 1/12, 1/6) 表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每6秒采一次样)， 采完等待 10分钟，之后再采5分钟
@@ -118,6 +118,39 @@ class Telescope():
                             temph = h + i# temph += i, is wrong
                 h += (H[2]+H[3])
         return (u,v,w), Baselines_uv
+    def gen_uvimg_from_UVW(self, UVW, freq, RC, FOV):
+        uvimg = np.zeros(RC)
+        wavelength = SPEEDOFLIGHT/ freq
+        U = np.array(UVW[0])/wavelength
+        V = np.array(UVW[1])/wavelength
+        # scaleu = FOV[0]/3600*np.pi/180
+        # scalev = FOV[1]/3600*np.pi/180
+        scaleu = np.max((np.max(np.abs(U)),np.max(np.abs(V))))*1.05
+        scalev = scaleu
+        U = U/scaleu
+        V = V/scalev
+        r = (RC[0]/2*(1-V))
+        c = (RC[1]/2*(1+U))
+        flag = 1
+        # uvimg[int(r),int(v)]=1
+        uvimg[r.astype(np.int),c.astype(np.int)]=1
+        # for i in range(len(r)):
+        #     try:
+        #         uvimg[int(r[i]),int(c[i])] = 1
+        #     except:
+        #         flag = 0
+
+        # for i in range(len(U)):
+        #     u,v = U[i],V[i]
+        #     try:
+        #         # uvimg[int(u/scaleu*RC[0]+RC[0]/2),int(v/scalev*RC[1]+RC[1]/2)] = 1
+        #         # uvimg[int(RC[0]/2 - v/scalev*RC[0]),int(u/scaleu*RC[1]+RC[1]/2)] = 1
+
+        #     except:
+        #         flag = 0
+        if not flag:
+            print("uvcover out of FOV")
+        self.uvcover = uvimg
     def fake_uvcover(self, RC, teles):
         # RC is the size of generate uv coverage image, teles are sites in different radiu and angle_position
         Row = RC[0]
@@ -294,7 +327,7 @@ if __name__ == "__main__":
     #     site["V"] = np.array(site["V"])/10**3
     #     site["W"] = np.array(site["W"])/10**3
     
-
+    tele1.gen_uvimg_from_UVW(UVW, freq, (512,512), (0.000204595,0.000204595))
 
     title1 = "UV coverage of {} sites at {:.1f} GHz\n".format(len(Array),freq/10**9)
     title2 = r"Hour angle: ${}^h$ $\sim$ ${}^h$, Declination: ${}^\circ$".format(H[0],H[1],Dec)
@@ -302,4 +335,8 @@ if __name__ == "__main__":
     # x = np.array(UVW[0])/10**3
     # y = np.array(UVW[1])/10**3
     # plot_scatter((x,y), title = "UV coverage",xlabel = r"u ($k\lambda$)", ylabel = r"v ($k\lambda$)")
+    # print(np.max(tele1.uvcover))
+    plt.figure()
+
+    plot(tele1.uvcover, title = "UV coverage image of {} sites".format(len(Array)),xlabel = "u (pixel)", ylabel = "v (pixel)", colorbar = True)
     plt.show()

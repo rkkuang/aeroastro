@@ -6,24 +6,121 @@ import scipy.optimize as opt
 import random
 from scipy import signal
 from mpl_toolkits.mplot3d import Axes3D  # 空间三维画图
+from matplotlib.ticker import ScalarFormatter,FuncFormatter
+from matplotlib.ticker import StrMethodFormatter
+# plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}')) # No decimal places
+# plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.2f}')) # 2 decimal places
+
+# https://www.cnblogs.com/qqhfeng/p/5567539.html
+# cbar = plt.colorbar(gci)  
+# cbar.set_label('$T_B(K)$',fontdict=font)  
+# cbar.set_ticks(np.linspace(160,300,8))  
+# cbar.set_ticklabels( ('160', '180', '200', '220', '240',  '260',  '280',  '300'))  
+
+yHeight = 1.05
 
 # 设置一下cmap, https://blog.csdn.net/qq_28485501/article/details/82656614
 # plt.imshow(train_images[0], cmap='binary')
 # plt.imshow(train_images[0], cmap='Greys_r')
 # plt.imshow(train_images[0], cmap='Greys')
-def plot(whichimg, title = "title", xlabel="x", ylabel="y", colorbar = False, islog = False, cmap = 'gray'):
+def mjrFormatter(x, pos):
+    return "{0:.1f}".format(x)
+    # return 
+# from matplotlib.ticker import ScalarFormatter
+
+class ScalarFormatterForceFormat(ScalarFormatter):
+    def _set_format(self):  # Override function that finds format to use.
+        self.format = "%1.1f"  # Give format here
+
+def plot(whichimg, title = "title", xlabel="x", ylabel="y",origin = None, colorbar = False, islog = False,corlorbarformat=None, cmap = 'gray',xticks=(np.arange(0, 512, 100), np.arange(0, 512, 100)), yticks=(np.arange(0, 512, 100), np.arange(0, 512, 100))):
     # plt.figure()
+    # plt.yticks(np.arange(0, 1024, 100), np.arange(10000, 11024, 100))
+    # #第一个参数表示原来的坐标范围，100是每隔100个点标出一次
+    # #第二个参数表示将展示的坐标范围替换为新的范围，同样每隔100个点标出一次
+    # plt.xticks(np.arange(0, 2000, 500), np.arange(0, 50000, 500)) 
+    # #同理将x轴的表示范围由（0,2000）扩展到（0,50000）每隔500个点标出一次
+    
+
+    # https://stackoverflow.com/questions/12750355/python-matplotlib-figure-title-overlaps-axes-label-when-using-twiny
+    # Python Matplotlib figure title overlaps axes label when using twiny
+
+    # https://cloud.tencent.com/developer/ask/190276
+    # 在Matplotlib中更改Colorbar的缩放/单位
+
+
+    # figure_1 = plt.figure()
+    # ax = figure_1.add_subplot(111)
     if islog:
         # whichimg = exposure.rescale_intensity(whichimg,in_range=(0,255))
         # print(min(whichimg.all()))
         whichimg = exposure.adjust_log(whichimg)
-    plt.imshow(whichimg, cmap = cmap)#cmap = plt.cm.gray_r
+    yticks1,yticks2 = yticks[0],yticks[1]#(np.arange(0, 512, 100), np.arange(0, 512, 100))
+    xticks1,xticks2 = xticks[0],xticks[1]
+    #extent=extent, origin='lower', (-middle,middle,-middle,middle)
+    #https://stackoverflow.com/questions/9382664/python-matplotlib-imshow-custom-tickmarks
+    # extent = (-1,1,-1,1)#(xticks[0],xticks[:-1],yticks[0],yticks[:-1])
+    extent = (xticks2[0],xticks2[-1],yticks2[0],yticks2[-1])
+    # print(extent)
+    # input(">>>>>>>>>>>>")
+    plt.imshow(whichimg, cmap = cmap,  origin='lower',extent=extent )#cmap = plt.cm.gray_r
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.title(title)
+    plt.title(title, y=yHeight)
+    
+    # ax.set_yticks(yticks1,yticks2)
+    # ax.set_xticks(xticks1,xticks2)
+    
+
+
+    # plt.ticklabel_format(axis='x', style='sci')
+    # plt.ticklabel_format(axis='y', style='sci')
+    # #http://www.cocoachina.com/articles/83405
+    # #https://blog.csdn.net/junxinwoxin/article/details/86610914
+    # ax.yaxis.major.formatter.set_powerlimits((0,1))## 将坐标轴的base number设置为一位。
+    # ax.xaxis.major.formatter.set_powerlimits((0,1))
+    ax = plt.gca()
+    # yfmt = ScalarFormatterForceFormat()
+    # yfmt.set_powerlimits((0,0))
+    # ax.yaxis.set_major_formatter(yfmt)
+    # ax.xaxis.set_major_formatter(yfmt)
+
+    # plt.yticks(yticks1,yticks2)
+    # plt.xticks(xticks1,xticks2)
+
+    # plt.yticks(yticks1,yticks2)
+    # plt.xticks(xticks1,xticks2)
+
+    # plt.ticklabel_format(style='sci', axis='x', scilimits=(0,0))
+    # plt.ticklabel_format(style='sci', axis='y', scilimits=(0,0))
+    
+    # plt.gca().yaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
+    # plt.gca().xaxis.set_major_formatter(StrMethodFormatter('{x:,.0f}'))
+
+    # ****** https://www.jianshu.com/p/929a3e711f0e
+    # 使用python中的matplotlib进行绘图分析数据
+    xfmt = ScalarFormatter(useMathText=True)
+    xfmt.set_powerlimits((0, 0))  # Or whatever your limits are . . .
+    ax.yaxis.set_major_formatter(xfmt)
+    ax.xaxis.set_major_formatter(xfmt)
+
+    # plt.ticklabel_format(axis='y', style='sci')
+    # ax.yaxis.major.formatter.set_powerlimits((0,0))
+
+    # ax.yaxis.set_major_formatter(FuncFormatter(mjrFormatter))
+    # ax.xaxis.set_major_formatter(FuncFormatter(mjrFormatter))
+
+    # ax.xaxis.set_major_formatter(ScalarFormatter())
+    # ax.yaxis.set_major_formatter(ScalarFormatter())
+
+    #https://blog.csdn.net/wuzlun/article/details/80053277
+
     if colorbar:
-        plt.colorbar()
-def plot_scatter(data, title = "title", xlabel="x", ylabel="y",zlabel = 'z',dim = 3, plotlabel = False, colorbar = False, islog = False, cmap = 'gray'):
+        # plt.colorbar()
+        cbar = plt.colorbar()
+        cbar.set_label(corlorbarformat)
+        cbar.formatter.set_powerlimits((0, 0))
+        cbar.update_ticks()
+def plot_scatter(data, title = "title", xlabel="x",origin = None, ylabel="y",zlabel = 'z',dim = 3, plotlabel = False, colorbar = False, islog = False, cmap = 'gray'):
     # plt.figure()
     if islog:
         # whichimg = exposure.rescale_intensity(whichimg,in_range=(0,255))
@@ -69,17 +166,23 @@ def plot_scatter(data, title = "title", xlabel="x", ylabel="y",zlabel = 'z',dim 
     if colorbar:
         plt.colorbar()
 
-def plot_scatter_Baseline(data, title = "title", xlabel="x", ylabel="y",zlabel = 'z',dim = 3, plotlabel = False, colorbar = False, islog = False, cmap = 'gray'):
+def plot_scatter_Baseline(data, title = "title",legend=True, xlabel="x", ylabel="y",zlabel = 'z',dim = 3, plotlabel = False, colorbar = False, islog = False, cmap = 'gray'):
     if dim == 2:
         for key,value in data.items():
             ax = plt.gca()
             plt.scatter(value["U"],value["V"],s=1,marker='o',label=key)
-            plt.ticklabel_format(axis='x', style='sci')
-            plt.ticklabel_format(axis='y', style='sci')
-            #http://www.cocoachina.com/articles/83405
-            #https://blog.csdn.net/junxinwoxin/article/details/86610914
-            ax.yaxis.major.formatter.set_powerlimits((0,1))## 将坐标轴的base number设置为一位。
-            ax.xaxis.major.formatter.set_powerlimits((0,1))
+            # plt.ticklabel_format(axis='x', style='sci')
+            # plt.ticklabel_format(axis='y', style='sci')
+            # #http://www.cocoachina.com/articles/83405
+            # #https://blog.csdn.net/junxinwoxin/article/details/86610914
+            # ax.yaxis.major.formatter.set_powerlimits((0,1))## 将坐标轴的base number设置为一位。
+            # ax.xaxis.major.formatter.set_powerlimits((0,1))
+
+            xfmt = ScalarFormatter(useMathText=True)
+            xfmt.set_powerlimits((0, 0))  # Or whatever your limits are . . .
+            ax.yaxis.set_major_formatter(xfmt)
+            ax.xaxis.set_major_formatter(xfmt)
+
             plt.axis('square')
     else:
         fig = plt.figure()
@@ -90,11 +193,11 @@ def plot_scatter_Baseline(data, title = "title", xlabel="x", ylabel="y",zlabel =
             # plt.zlabel(zlabel)
         ax.set_zlabel(zlabel)
 
-
-    plt.legend()#loc = 'upper right'
+    if legend:
+        plt.legend()
     plt.xlabel(xlabel)
     plt.ylabel(ylabel)
-    plt.title(title)
+    plt.title(title, y=yHeight)
     if colorbar:
         plt.colorbar()
 
