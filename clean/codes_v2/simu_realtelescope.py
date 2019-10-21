@@ -50,7 +50,7 @@ Array = [LMT,PV,ALMA50,SMT,Hawaii8,GLT,CARMA8,SMA,PDB,ALMA50_1,ALMA50_12]
 # Array = [LMT,PV,ALMA50,SMT,Hawaii8,GLT]
 tele1 = Telescope([],[])
 center = ALMA50#Array[0]
-H = (0, 12, 1/2, 1/12, 1/3600)#表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每5秒采一次样)， 采完等待 10分钟，之后再采5分钟
+H = (0, 12, 1/2, 1/12, 10/3600)#表示时角范围从 6.1 到 7.1, 每次采样 5分钟(这5分钟里每5秒采一次样)， 采完等待 10分钟，之后再采5分钟
 Dec = 60 #Declination, 赤纬，度
 freq = 227.297 * 10**9 # 1 GHz, 227297 MHz
 UVW, Baselines_uv = tele1.uvArray_Baseline(Array=Array, center=[], H=H, Dec=Dec, freq=freq)
@@ -105,8 +105,8 @@ yticks = xticks
 tele1.gen_dirty_beam()
 tele1.dirty_beam = Total_flux_density*tele1.dirty_beam/np.sum(tele1.dirty_beam)
 plt.subplot(232)
-plot(tele1.dirty_beam, title = "Dirty beam\n"+atxHz+Map_center,xlabel = "Right Ascension (arcsecond)", origin='lower',corlorbarformat=fmt, cmap = plt.cm.jet, ylabel = "Relative Declination (arcsecond)", colorbar = True, islog = False,xticks=xticks,yticks=yticks)
-
+plot(tele1.dirty_beam, title = "Dirty beam\n"+atxHz+Map_center,xlabel = "Right Ascension (arcsecond)", origin='lower',corlorbarformat=fmt, cmap = 'rainbow', ylabel = "Relative Declination (arcsecond)", colorbar = True, islog = True, xticks=xticks,yticks=yticks)
+# 'rainbow', 'gist_rainbow'
 num_source = 30
 point_source = gen_point_source(num_source, RC)
 
