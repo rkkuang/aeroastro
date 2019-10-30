@@ -144,6 +144,7 @@ class GravLens():
                 plt.ylim(-1.5,1.5)
                 # r"The Caustic Lines of two point mass lens with $\mu_1=\mu_2$ and $X = {}$".format(self.X)
                 # plt.scatter([-self.X,self.X],[0,0],s=50,c="r",marker="+")
+    def gen_lightcurve(self, x1, x2):
 
     def radi2car(self, r, phi):
         x = np.multiply(r, np.cos(phi*np.pi/180))
@@ -153,7 +154,7 @@ class GravLens():
 
 
 if __name__ == '__main__':
-    glens = GravLens(0.5, 0.9)#8**(-0.5001)
+    glens = GravLens(0.5, 0.3)#8**(-0.5001)
     plt.subplot(121)
     glens.gen_critical_lines(10000)
     plt.subplot(122)
