@@ -3,7 +3,7 @@ Two (N=2) galaxies are aligned perfectly with the Earth and a distant quasar.
 Each galaxy can be modelled as a singular isothermal sphere.
 How many Einstein rings are formed as a result?
 
-![](https://github.com/rkkuang/aeroastro/blob/master/gravlen/num_einstain_rings/geo.jpg)
+![](https://github.com/rkkuang/aeroastro/blob/master/gravlen/num_einstain_rings/resdata/2SISlens.png)
 
 [stdout](https://github.com/rkkuang/aeroastro/blob/master/gravlen/num_einstain_rings/resdata/stdout.txt)
 
