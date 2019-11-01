@@ -4,9 +4,6 @@ Each galaxy can be modelled as a singular isothermal sphere.
 How many Einstein rings are formed as a result?
  
 
-How will your results generalize when you have N>2 galaxies?
-
-
 In this python script I will check the situation of N = 2,
 
 The distences from observer to lens2, from lens2 to lens1, from lens1 to source are d3, d2, d1, respectively,
@@ -36,11 +33,27 @@ h3 << d1
 
 if for a given d1,d2,d3,alpha1,alpha2, both (h1,h2) and (h3,h4) are exist, then there will be 2 Einstein Rings,
 otherwise there will be only one.
+
+
+How will your results generalize when you have N>2 galaxies?
+if there are N galaxies, we can consider how many times j the light will cross the line of sight befor reach the observer:
+if j = 0, there are 1 possibility,
+if j = 1, there are C_{N-1}^{1} possibilities,
+if j = 2, there are C_{N-1}^{2} possibilities,
+...
+if j = k, there are C_{N-1}^{k} possibilities,
+, so depends on how those N galaxies are placed and the dispersion velocities, 
+the maximun number of Einstein rings will be 2^{N-1}.
+
+
 '''
 
 # all d1, d2, d3 are normalized to d1, so I will fix d1 = 1
 import numpy as np
 alpha0 = 1.4 * np.pi / (3600*180)# 1.4 arcsec for a SIS model with dispersion 220km/s
+# https://en.wikipedia.org/wiki/Velocity_dispersion
+
+
 d1 = 1
 num = 2*1e1
 D2 = np.linspace(0.1, 4, num)
