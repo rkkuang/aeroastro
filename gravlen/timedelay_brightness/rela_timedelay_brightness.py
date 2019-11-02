@@ -5,4 +5,6 @@ the relative relationship between time delay and beightness various with the mas
 
 first and second derivative of a two dimentional image
 https://zhuanlan.zhihu.com/p/51529896
+
+http://www.astronomy.ohio-state.edu/~gaudi/movies.html
 '''
