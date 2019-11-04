@@ -61,7 +61,7 @@ class twoSISes():
         # print(criticaly)
         # title = "The Critical Curves of two SIS lens located at\n"+r"({:.1f},0),Ds/Dds={:.1f};({:.1f},0),Ds/Dds={:.1f} with $\theta_E=${:.1f};{:.1f} in arcsec".format(self.lens1.loc*180/np.pi*3600,self.lens1.D_s/self.lens1.D_ds,
         #     self.lens2.loc*180/np.pi*3600,self.lens2.D_s/self.lens2.D_ds,self.lens1.theta_E*180/np.pi*3600, self.lens2.theta_E*180/np.pi*3600)
-        title = "The Critical Curves of two SIS lens located at the same redshift\n"+r"({:.1f},0),({:.1f},0) with $\theta_E=${:.1f};{:.1f} in arcsec".format(self.lens1.loc*180/np.pi*3600,
+        title = "The Critical Curves of two SIS lens located at the same redshift\n"+r"({:.1f},0),({:.1f},0) with $\theta_E=${:.1f},{:.1f} in arcsec".format(self.lens1.loc*180/np.pi*3600,
             self.lens2.loc*180/np.pi*3600,self.lens1.theta_E*180/np.pi*3600, self.lens2.theta_E*180/np.pi*3600)
 
         spescatter(self.criticalx*180/np.pi*3600,self.criticaly*180/np.pi*3600,r"$\theta_1$/arcsec",r"$\theta_2$/arcsec",title)
@@ -69,9 +69,10 @@ class twoSISes():
     def gen_caustic_lines(self):
         # beta = theta - alpha(theta)
         #beta = theta - thetaE*vectheta/|vectheta|
-        r = np.sqrt(self.criticalx**2+self.criticaly**2)
-        alphax = self.lens1.theta_E*self.criticalx/r+self.lens2.theta_E*self.criticalx/r
-        alphay = self.lens1.theta_E*self.criticaly/r+self.lens2.theta_E*self.criticaly/r
+        r1 = np.sqrt((self.criticalx-self.lens1.loc)**2+self.criticaly**2)
+        r2 = np.sqrt((self.criticalx-self.lens2.loc)**2+self.criticaly**2)
+        alphax = self.criticalx - (self.lens1.theta_E*(self.criticalx-self.lens1.loc)/r1+self.lens2.theta_E*(self.criticalx-self.lens2.loc)/r2)
+        alphay = self.criticaly - (self.lens1.theta_E*self.criticaly/r1+self.lens2.theta_E*self.criticaly/r2)
         self.causticsx = self.criticalx - alphax
         self.causticsy = self.criticaly - alphax
         spescatter(self.causticsx*180/np.pi*3600,self.causticsy*180/np.pi*3600,r"$\beta_1$/arcsec",r"$\beta_2$/arcsec",
@@ -104,9 +105,9 @@ def genxy(xlim=(-1,1),ylim=(-1,1),num=100):
     
 
 if __name__ == '__main__':
-    loc1 = 1.5 # in arcsec
-    loc2 = -1.5
-    lens1 = oneSIS(sigma_v=300, z=1, D_ds=1, D_s=2, loc=loc1)
+    loc1 = .5 # in arcsec
+    loc2 = -3.5
+    lens1 = oneSIS(sigma_v=200, z=1, D_ds=1, D_s=3, loc=loc1)
     lens2 = oneSIS(sigma_v=200, z=1, D_ds=1, D_s=2, loc=loc2)
     lenses = twoSISes(lens1,lens2)
     mx = max(lens1.theta_E+max(abs(loc1),abs(loc2))/3600/180*np.pi,lens2.theta_E+max(abs(loc1),abs(loc2))/3600/180*np.pi)*2.5
