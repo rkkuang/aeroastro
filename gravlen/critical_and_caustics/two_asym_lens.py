@@ -22,9 +22,9 @@ font2 = {'family': 'Times New Roman',
          'size': 16,
          }
 
-def spescatter(x,y,xlabel,ylabel,title):
+def spescatter(x,y,xlabel,ylabel,title,c="b",s=1):
     #plot
-    plt.scatter(x,y,s=1,c="b")
+    plt.scatter(x,y,s=s,c=c)
     # plt.scatter([-self.X,self.X],[0,0],s=50,c="r",marker="+")
     plt.xlabel(xlabel,font2)
     plt.ylabel(ylabel,font2)
@@ -34,7 +34,7 @@ def spescatter(x,y,xlabel,ylabel,title):
     # plt.axis('square')
 
 class GravLens():
-    def __init__(self, massratio=0.5, X=0.1,  ):
+    def __init__(self, massratio=0.5, X=0.1):
         '''
         massratio: mu1/mu2
         '''
