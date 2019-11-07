@@ -216,37 +216,37 @@ def genxy(xlim=(-1,1),ylim=(-1,1),num=100):
 if __name__ == '__main__':
 
     # testing two SIS lenses at different redshift
-    loc1 = (3.0,0) # in arcsec
-    loc2 = (-3.0,0)
-    #lens1 closer to the source
-    lens1 = oneSIS(sigma_v=800, z=1, D_ds=1, D_s=4, loc=loc1)
-    lens2 = oneSIS(sigma_v=500, z=1, D_ds=2, D_s=4, loc=loc2)
-    lenses = twoSISes(lens1,lens2)
-    maxloc = max([abs(loc1[0]), abs(loc1[1]), abs(loc2[0]), abs(loc2[1])])
-    mx = max(lens1.theta_E+maxloc/3600/180*np.pi,lens2.theta_E+maxloc/3600/180*np.pi)*2.5
-    xlim = (-mx,mx)
-    ylim = xlim
-    print("xlim in arcsec",xlim[0]*180/np.pi*3600,xlim[1]*180/np.pi*3600)
-    plt.subplot(121)
-    crititle = "The Critical Curves of two SIS lens located at different redshift\n"+r"loc: ({:.1f},{:.1f}),({:.1f},{:.1f}) and $\theta_E: ${:.1f},{:.1f} in arcsec".format(lenses.lens1.locx*180/np.pi*3600,
-        lenses.lens1.locy*180/np.pi*3600,lenses.lens2.locx*180/np.pi*3600,lenses.lens2.locy*180/np.pi*3600,lenses.lens1.theta_E*180/np.pi*3600, lenses.lens2.theta_E*180/np.pi*3600)
-    lenses.gen_critical_lines1(anno = True,xlim=xlim,ylim=xlim,threshold = 3e3,num=8000,magfunc=lenses.comp_magnification_diffz,title=crititle)
-    plt.subplot(122)
-    lenses.gen_caustic_lines_multi("The corresponding Caustics on source plane")
-    plt.show()
-
-    # # testing two SIS lenses at the same redshift
-    # loc1 = .5 # in arcsec
-    # loc2 = -3.5
-    # lens1 = oneSIS(sigma_v=200, z=1, D_ds=1, D_s=2, loc=(loc1,0))
-    # lens2 = oneSIS(sigma_v=200, z=1, D_ds=1, D_s=2, loc=(loc2,0))
+    # loc1 = (3.0,0) # in arcsec
+    # loc2 = (-3.0,0)
+    # #lens1 closer to the source
+    # lens1 = oneSIS(sigma_v=800, z=1, D_ds=1, D_s=4, loc=loc1)
+    # lens2 = oneSIS(sigma_v=500, z=1, D_ds=2, D_s=4, loc=loc2)
     # lenses = twoSISes(lens1,lens2)
-    # mx = max(lens1.theta_E+max(abs(loc1),abs(loc2))/3600/180*np.pi,lens2.theta_E+max(abs(loc1),abs(loc2))/3600/180*np.pi)*2.5
+    # maxloc = max([abs(loc1[0]), abs(loc1[1]), abs(loc2[0]), abs(loc2[1])])
+    # mx = max(lens1.theta_E+maxloc/3600/180*np.pi,lens2.theta_E+maxloc/3600/180*np.pi)*2.5
     # xlim = (-mx,mx)
     # ylim = xlim
     # print("xlim in arcsec",xlim[0]*180/np.pi*3600,xlim[1]*180/np.pi*3600)
     # plt.subplot(121)
-    # lenses.gen_critical_lines1(xlim=xlim,ylim=xlim,threshold = 5e3,num=6000,magfunc=lenses.comp_magnification)
+    # crititle = "The Critical Curves of two SIS lens located at different redshift\n"+r"loc: ({:.1f},{:.1f}),({:.1f},{:.1f}) and $\theta_E: ${:.1f},{:.1f} in arcsec".format(lenses.lens1.locx*180/np.pi*3600,
+    #     lenses.lens1.locy*180/np.pi*3600,lenses.lens2.locx*180/np.pi*3600,lenses.lens2.locy*180/np.pi*3600,lenses.lens1.theta_E*180/np.pi*3600, lenses.lens2.theta_E*180/np.pi*3600)
+    # lenses.gen_critical_lines1(anno = True,xlim=xlim,ylim=xlim,threshold = 3e3,num=8000,magfunc=lenses.comp_magnification_diffz,title=crititle)
     # plt.subplot(122)
-    # lenses.gen_caustic_lines()
-    # plt.show()   
+    # lenses.gen_caustic_lines_multi("The corresponding Caustics on source plane")
+    # plt.show()
+
+    # # testing two SIS lenses at the same redshift
+    loc1 = 1. # in arcsec
+    loc2 = -1
+    lens1 = oneSIS(sigma_v=250, z=1, D_ds=1, D_s=2, loc=(loc1,0))
+    lens2 = oneSIS(sigma_v=250, z=1, D_ds=1, D_s=2, loc=(loc2,0))
+    lenses = twoSISes(lens1,lens2)
+    mx = max(lens1.theta_E+max(abs(loc1),abs(loc2))/3600/180*np.pi,lens2.theta_E+max(abs(loc1),abs(loc2))/3600/180*np.pi)*2.5
+    xlim = (-mx,mx)
+    ylim = xlim
+    print("xlim in arcsec",xlim[0]*180/np.pi*3600,xlim[1]*180/np.pi*3600)
+    plt.subplot(121)
+    lenses.gen_critical_lines1(xlim=xlim,ylim=xlim,threshold = 5e3,num=6000,magfunc=lenses.comp_magnification)
+    plt.subplot(122)
+    lenses.gen_caustic_lines()
+    plt.show()   
