@@ -230,7 +230,7 @@ if __name__ == '__main__':
     plt.subplot(121)
     crititle = "The Critical Curves of two SIS lens located at different redshift\n"+r"loc: ({:.1f},{:.1f}),({:.1f},{:.1f}) and $\theta_E: ${:.1f},{:.1f} in arcsec".format(lenses.lens1.locx*180/np.pi*3600,
         lenses.lens1.locy*180/np.pi*3600,lenses.lens2.locx*180/np.pi*3600,lenses.lens2.locy*180/np.pi*3600,lenses.lens1.theta_E*180/np.pi*3600, lenses.lens2.theta_E*180/np.pi*3600)
-    lenses.gen_critical_lines1(anno = True,xlim=xlim,ylim=xlim,threshold = 3e3,num=5000,magfunc=lenses.comp_magnification_diffz,title=crititle)
+    lenses.gen_critical_lines1(anno = True,xlim=xlim,ylim=xlim,threshold = 3e3,num=8000,magfunc=lenses.comp_magnification_diffz,title=crititle)
     plt.subplot(122)
     lenses.gen_caustic_lines_multi("The corresponding Caustics on source plane")
     plt.show()
