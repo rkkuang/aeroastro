@@ -22,7 +22,7 @@ font2 = {'family': 'Times New Roman',
          'size': 16,
          }
 
-def spescatter(x,y,xlabel="x",ylabel="y",title="title",c="b",s=1):
+def spescatter(x,y,xlabel="x",ylabel="y",title="title",c="b",s=1,issqure=True,xylim=1):
     #plot
     plt.scatter(x,y,s=s,c=c)
     # plt.scatter([-self.X,self.X],[0,0],s=50,c="r",marker="+")
@@ -31,7 +31,10 @@ def spescatter(x,y,xlabel="x",ylabel="y",title="title",c="b",s=1):
     plt.tick_params(labelsize=12)
     plt.grid()
     plt.title(title)
-    plt.axis('square')
+    if issqure:
+        plt.axis('square')
+    plt.ylim(-xylim,xylim)
+    plt.xlim(-xylim,xylim)
 
 class GravLens():
     def __init__(self, massratio=0.5, X=0.1):
@@ -41,7 +44,7 @@ class GravLens():
         self.massratio = massratio
         self.X = X
 
-    def gen_critical_lines(self, num = 100,title="title",xlabel="x",ylabel="y"):
+    def gen_critical_lines(self, num = 100,title="title",xlabel="x",ylabel="y",xylim=2):
         if self.massratio == 0.5:
             if self.X**2 <= 0.125:
                 # print("hello")
@@ -99,10 +102,9 @@ class GravLens():
             #plot, r"$r_1=r\cos\phi$",r"$r_2=r\sin\phi$"
             spescatter(np.concatenate((self.r1,specialr1),axis=0),np.concatenate((self.r2,specialr2),axis=0),
                 xlabel = xlabel,ylabel=ylabel,title=title)
-            plt.scatter([-self.X,self.X],[0,0],s=100,c="g",marker="x")
-            plt.ylim(-1.5,1.5)
-            plt.xlim(-2,2)
-    def gen_caustic_lines(self, num = 100,title="title",xlabel="x",ylabel="y"):
+            plt.scatter([-self.X,self.X],[0,0],s=100,c="g",marker="x",xylim=xylim)
+
+    def gen_caustic_lines(self, num = 100,title="title",xlabel="x",ylabel="y",xylim=2):
         if self.massratio == 0.5:
             if not len(self.r1):
                 print("Please generate critical lines first by calling gen_critical_lines()")
@@ -141,9 +143,8 @@ class GravLens():
                 x1=np.concatenate((self.x1,specialx1),axis=0)
                 x2=np.concatenate((self.x2,specialx2),axis=0)
                 spescatter(x1,x2,
-                    xlabel = xlabel,ylabel=ylabel, title=title,c="r")
-                plt.ylim(-1.5,1.5)
-                plt.xlim(-2,2)
+                    xlabel = xlabel,ylabel=ylabel, title=title,c="r",xylim = xylim)
+
                 # r"The Caustic Lines of two point mass lens with $\mu_1=\mu_2$ and $X = {}$".format(self.X)
                 # plt.scatter([-self.X,self.X],[0,0],s=50,c="r",marker="+")
 
@@ -155,14 +156,16 @@ class GravLens():
 
 
 if __name__ == '__main__':
-    glens = GravLens(0.5, 1.2)#8**(-0.5001)
+    mu = 0.5 # mass ratio
+    X = .35 # position in arcsec
+    glens = GravLens(mu, X)#8**(-0.5001)
     # plt.subplot(121)
     cri_title = r"The Critical Curves(blue) of two point mass(green) lens with $\mu_1=\mu_2$ and $X = {:.2f}$".format(glens.X)
-    glens.gen_critical_lines(10000,title="title")
+    glens.gen_critical_lines(10000,title="title",xylim=max(1.5,2*X))
     # plt.subplot(122)
     cau_title = "\n"+r"and the corresponding Caustics(red) on source plane"
     final_title = cri_title+cau_title
-    glens.gen_caustic_lines(title=final_title,xlabel=r"x (arcsec)",ylabel=r"y (arcsec)")
+    glens.gen_caustic_lines(title=final_title,xlabel=r"x (arcsec)",ylabel=r"y (arcsec)",xylim=max(1.5,2*X))
     plt.show()
     print("done")
 

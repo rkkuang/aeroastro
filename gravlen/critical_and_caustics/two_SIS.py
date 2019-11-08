@@ -8,7 +8,7 @@ loacted at the same redshift
 
 import numpy as np 
 import matplotlib.pyplot as plt
-from two_asym_lens import spescatter
+from two_pointM_lens import spescatter
 
 class oneSIS():
     def __init__(self, sigma_v=200, z=1, D_ds=1, D_s=2, loc=(0.8,0)):
@@ -52,21 +52,22 @@ class twoSISes():
         print(np.abs(self.mu).min())
 
     def comp_magnification(self,x,y):
-        lens1.loc = lens1.locx
-        lens2.loc = lens2.locx
-        r1 = np.sqrt(np.multiply(x-lens1.loc,x-lens1.loc)+np.multiply(y,y))
-        r2 = np.sqrt(np.multiply(x-lens2.loc,x-lens2.loc)+np.multiply(y,y))
+        rho1x = self.lens1.locx
+        rho2x = self.lens2.locx
+        r1 = np.sqrt(np.multiply(x-rho1x,x-rho1x)+np.multiply(y,y))
+        r2 = np.sqrt(np.multiply(x-rho2x,x-rho2x)+np.multiply(y,y))
 
-        A11 = 1-(lens1.theta_E*(1/r1-(x-lens1.loc)**2/r1**3)
-            + lens2.theta_E*(1/r2-(x-lens2.loc)**2/r2**3))
+        A11 = 1-(self.lens1.theta_E*(1/r1-(x-rho1x)**2/r1**3)
+            + self.lens2.theta_E*(1/r2-(x-rho2x)**2/r2**3))
 
-        A12 = -(-lens1.theta_E*(x-lens1.loc)*y/r1**3
-             - lens2.theta_E*(x-lens2.loc)*y/r2**3)
+        A12 = -(-self.lens1.theta_E*(x-rho1x)*y/r1**3
+             - self.lens2.theta_E*(x-rho2x)*y/r2**3)
         # A21 = A12
-        A22 = 1-(lens1.theta_E*(1/r1-y**2/r1**3)
-            + lens2.theta_E*(1/r2-y**2/r2**3))  
+        A22 = 1-(self.lens1.theta_E*(1/r1-y**2/r1**3)
+            + self.lens2.theta_E*(1/r2-y**2/r2**3))
 
-        self.detA = np.multiply(A11,A22) - np.multiply(A12,A12)
+        # self.detA = np.multiply(A11,A22) - np.multiply(A12,A12)
+        self.detA = A11*A22-A12*A12
         # mu = 1/np.abs(detA)
         self.mu = 1/self.detA
         print(np.abs(self.mu).max())
@@ -75,7 +76,7 @@ class twoSISes():
         # print(self.detA.min())
         # input()
         # print(mu)
-    def gen_critical_lines1(self,anno = False, xlim=(-1,1),ylim=(-1,1),num=100,threshold = 0.985, magfunc=None, title="Critical lines"):
+    def gen_critical_lines1(self,issqure=True,anno = False, xlim=(-1,1),ylim=(-1,1),num=100,threshold = 0.985, magfunc=None, title="Critical lines",xylim = 2):
         thetax, thetay = genxy(xlim=xlim,ylim=ylim,num=num)
         # self.comp_magnification(thetax, thetay)
         magfunc(thetax, thetay)
@@ -87,11 +88,11 @@ class twoSISes():
         #     self.lens2.loc*180/np.pi*3600,self.lens2.D_s/self.lens2.D_ds,self.lens1.theta_E*180/np.pi*3600, self.lens2.theta_E*180/np.pi*3600)
         
         markersize = 100
-        spescatter(self.criticalx*180/np.pi*3600,self.criticaly*180/np.pi*3600,r"$\theta_1$/arcsec",r"$\theta_2$/arcsec",title)
-        plt.scatter([self.lens1.locx*180/np.pi*3600],
-            [self.lens1.locy*180/np.pi*3600],s=markersize,c="r",marker="+")
-        plt.scatter([self.lens2.locx*180/np.pi*3600],
-            [self.lens2.locy*180/np.pi*3600],s=markersize*(self.lens2.D_ds/self.lens1.D_ds),c="g",marker="x")
+        spescatter(self.criticalx*180/np.pi*3600,self.criticaly*180/np.pi*3600,r"$\theta_1$/arcsec",r"$\theta_2$/arcsec",title=title,issqure=issqure,xylim=xylim)
+        # plt.scatter([self.lens1.locx*180/np.pi*3600],
+        #     [self.lens1.locy*180/np.pi*3600],s=markersize,c="r",marker="+")
+        # plt.scatter([self.lens2.locx*180/np.pi*3600],
+        #     [self.lens2.locy*180/np.pi*3600],s=markersize*(self.lens2.D_ds/self.lens1.D_ds),c="g",marker="x")
 
 
 
@@ -141,7 +142,7 @@ class twoSISes():
         xy 为被注释的坐标点
         xytext 为注释文字的坐标位置
         '''
-    def gen_caustic_lines_multi(self,title=None):
+    def gen_caustic_lines_diffz(self,title=None):
         x = self.criticalx
         y = self.criticaly
         a1, a2 = self.lens1.theta_E, self.lens2.theta_E
@@ -155,7 +156,7 @@ class twoSISes():
         markersize = 100
         spescatter(self.causticsx*180/np.pi*3600,self.causticsy*180/np.pi*3600,r"$\beta_1$/arcsec",r"$\beta_2$/arcsec",title)
         plt.scatter([self.lens1.locx*180/np.pi*3600],
-            [self.lens1.locy*180/np.pi*3600],s=markersize,c="r",marker="+")
+            [self.lens1.locy*180/np.pi*3600],s=markersize,c="g",marker="x")
         plt.scatter([self.lens2.locx*180/np.pi*3600],
             [self.lens2.locy*180/np.pi*3600],s=markersize*(self.lens2.D_ds/self.lens1.D_ds),c="g",marker="x")
 
@@ -174,19 +175,37 @@ class twoSISes():
         #     ,arrowprops=arrowprops,textcoords='offset points',color="green")
 
 
-    def gen_caustic_lines(self):
+    def gen_caustic_lines(self,issqure=True,xylim = 2,title = "Caustics",xlabel=r"x (arcsec)",ylabel=r"y (arcsec)"):
         # beta = theta - alpha(theta)
         #beta = theta - thetaE*vectheta/|vectheta|
-        r1 = np.sqrt((self.criticalx-self.lens1.loc)**2+self.criticaly**2)
-        r2 = np.sqrt((self.criticalx-self.lens2.loc)**2+self.criticaly**2)
+        # print(self.lens1.loc,self.lens2.loc)
+        r1 = np.sqrt((self.criticalx-self.lens1.locx)**2+self.criticaly**2)
+        r2 = np.sqrt((self.criticalx-self.lens2.locx)**2+self.criticaly**2)
+        # print(r1)
+
+        '''
+        wrong codes !!!!!!!!: 
         alphax = self.criticalx - (self.lens1.theta_E*(self.criticalx-self.lens1.loc)/r1+self.lens2.theta_E*(self.criticalx-self.lens2.loc)/r2)
         alphay = self.criticaly - (self.lens1.theta_E*self.criticaly/r1+self.lens2.theta_E*self.criticaly/r2)
         self.causticsx = self.criticalx - alphax
         self.causticsy = self.criticaly - alphax
-        spescatter(self.causticsx*180/np.pi*3600,self.causticsy*180/np.pi*3600,r"$\beta_1$/arcsec",r"$\beta_2$/arcsec",
-            "The corresponding Caustics on source plane")
-        plt.scatter([self.lens1.locx*180/np.pi*3600,self.lens2.locx*180/np.pi*3600],
-            [self.lens1.locy*180/np.pi*3600,self.lens2.locy*180/np.pi*3600],s=50,c="r",marker="+")
+        '''
+
+        alphax =  (self.lens1.theta_E*(self.criticalx-self.lens1.locx)/r1+self.lens2.theta_E*(self.criticalx-self.lens2.locx)/r2)
+        alphay =  (self.lens1.theta_E*self.criticaly/r1+self.lens2.theta_E*self.criticaly/r2)
+
+        self.causticsx = self.criticalx - alphax
+        # self.causticsy = self.criticaly - alphax  # wrong again!!!!!
+        self.causticsy = self.criticaly - alphay
+        spescatter(self.causticsx*180/np.pi*3600,self.causticsy*180/np.pi*3600,xlabel=xlabel,ylabel=ylabel,
+            title=title,issqure=issqure,xylim = xylim,c="r")
+        # plt.scatter([self.lens1.locx*180/np.pi*3600,self.lens2.locx*180/np.pi*3600],
+            # [self.lens1.locy*180/np.pi*3600,self.lens2.locy*180/np.pi*3600],s=100,c="r",marker="x")
+        markersize = 100
+        plt.scatter([self.lens1.locx*180/np.pi*3600],
+            [self.lens1.locy*180/np.pi*3600],s=markersize,c="g",marker="x")
+        plt.scatter([self.lens2.locx*180/np.pi*3600],
+            [self.lens2.locy*180/np.pi*3600],s=markersize*(self.lens2.D_ds/self.lens1.D_ds),c="g",marker="x")
 
     def findcritical(self,threshold,thetax,thetay):
         # threshold = self.mu.max()*threshold
@@ -232,21 +251,28 @@ if __name__ == '__main__':
     #     lenses.lens1.locy*180/np.pi*3600,lenses.lens2.locx*180/np.pi*3600,lenses.lens2.locy*180/np.pi*3600,lenses.lens1.theta_E*180/np.pi*3600, lenses.lens2.theta_E*180/np.pi*3600)
     # lenses.gen_critical_lines1(anno = True,xlim=xlim,ylim=xlim,threshold = 3e3,num=8000,magfunc=lenses.comp_magnification_diffz,title=crititle)
     # plt.subplot(122)
-    # lenses.gen_caustic_lines_multi("The corresponding Caustics on source plane")
+    # lenses.gen_caustic_lines_diffz("The corresponding Caustics on source plane")
     # plt.show()
 
     # # testing two SIS lenses at the same redshift
     loc1 = 1. # in arcsec
-    loc2 = -1
-    lens1 = oneSIS(sigma_v=250, z=1, D_ds=1, D_s=2, loc=(loc1,0))
-    lens2 = oneSIS(sigma_v=250, z=1, D_ds=1, D_s=2, loc=(loc2,0))
+    loc2 = -1.
+    lens1 = oneSIS(sigma_v=220, z=1, D_ds=1, D_s=2, loc=(loc1,0))
+    lens2 = oneSIS(sigma_v=220, z=1, D_ds=1, D_s=2, loc=(loc2,0))
     lenses = twoSISes(lens1,lens2)
     mx = max(lens1.theta_E+max(abs(loc1),abs(loc2))/3600/180*np.pi,lens2.theta_E+max(abs(loc1),abs(loc2))/3600/180*np.pi)*2.5
     xlim = (-mx,mx)
     ylim = xlim
+    # cri_title = r"The Critical Curves(blue) of two point mass(green) lens with $\mu_1=\mu_2$ and $X = {:.2f}$".format(glens.X)
+    cri_title = "The Critical Curves(blue) of two SIS lens(green) located at\n"+r"({:.1f},0),Ds/Dds={:.1f};({:.1f},0),Ds/Dds={:.1f} with $\theta_E=${:.1f};{:.1f} in arcsec".format(lenses.lens1.locx*180/np.pi*3600,lenses.lens1.D_s/lenses.lens1.D_ds,
+        lenses.lens2.locx*180/np.pi*3600,lenses.lens2.D_s/lenses.lens2.D_ds,lenses.lens1.theta_E*180/np.pi*3600, lenses.lens2.theta_E*180/np.pi*3600)
     print("xlim in arcsec",xlim[0]*180/np.pi*3600,xlim[1]*180/np.pi*3600)
-    plt.subplot(121)
-    lenses.gen_critical_lines1(xlim=xlim,ylim=xlim,threshold = 5e3,num=6000,magfunc=lenses.comp_magnification)
-    plt.subplot(122)
-    lenses.gen_caustic_lines()
+    # plt.subplot(121)
+    cau_title = "\n"+r"and the corresponding Caustics(red) on source plane"
+    title = cri_title + cau_title
+    xylim = max(3,2*loc1)
+    lenses.gen_critical_lines1(xylim = xylim,issqure=True,title=title, xlim=xlim,ylim=xlim,threshold = 5e3,num=6000,magfunc=lenses.comp_magnification)
+    # plt.subplot(122)
+    lenses.gen_caustic_lines(xylim = xylim,issqure=True,title=title,xlabel=r"x (arcsec)",ylabel=r"y (arcsec)")
+    plt.grid()
     plt.show()   
