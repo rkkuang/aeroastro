@@ -1,4 +1,4 @@
-from scipy.optimize import fsolve
+from scipy.optimize import fsolve,leastsq
 import numpy as np
 
 arcsec2rad = 1/3600/180*np.pi
@@ -35,3 +35,5 @@ if __name__ == '__main__':
 
     s=fsolve(func,[-0.6*arcsec2rad,0*arcsec2rad])# 1.6, -0.6
     print(s[0]*rad2arcsec,s[1]*rad2arcsec)
+
+    # Question: How to find all solutions
