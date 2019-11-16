@@ -16,26 +16,9 @@ and his book: https://www.springer.com/gp/book/9783642540820#aboutAuthors
 import numpy as np 
 import matplotlib.pyplot as plt
 
-# 设置横纵坐标的名称以及对应字体格式, https://blog.csdn.net/A_Z666666/article/details/81165123
-font2 = {'family': 'Times New Roman',
-         'weight': 'normal',
-         'size': 16,
-         }
 
-def spescatter(x,y,xlabel="x",ylabel="y",title="title",c="b",s=1,issqure=True,xylim=None):
-    #plot
-    plt.scatter(x,y,s=s,c=c)
-    # plt.scatter([-self.X,self.X],[0,0],s=50,c="r",marker="+")
-    plt.xlabel(xlabel,font2)
-    plt.ylabel(ylabel,font2)
-    plt.tick_params(labelsize=12)
-    plt.grid()
-    plt.title(title)
-    if issqure:
-        plt.axis('square')
-    if xylim:
-        plt.ylim(-xylim,xylim)
-        plt.xlim(-xylim,xylim)
+
+
 
 class GravLens():
     def __init__(self, massratio=0.5, X=0.1):

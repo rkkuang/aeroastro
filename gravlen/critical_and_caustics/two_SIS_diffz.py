@@ -11,7 +11,7 @@ https://ui.adsabs.harvard.edu/abs/1993A%26A...268..453E/abstract
 
 import numpy as np 
 import matplotlib.pyplot as plt
-from two_pointM_lens import spescatter
+from utils import spescatter
 
 arcsec2rad = 1/3600/180*np.pi
 rad2arcsec = 180/np.pi*3600
