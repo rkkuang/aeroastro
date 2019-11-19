@@ -20,32 +20,39 @@ import matplotlib.pyplot as plt
 
 class Onelens(object):
     """docstring for Onelens"""
-    def __init__(self, mass, position):
+    def __init__(self, mass, position, dis=0):
         super(Onelens, self).__init__()
         self.mass = mass
         self.pos = position
+        self.dis = dis
         
 
 class Twolenses(object):
     """docstring for Twolenses"""
-    def __init__(self, lens1, lens2, beta=0):
+    def __init__(self, lens1, lens2):
         super(Twolenses, self).__init__()
         self.lens1, self.lens2 = lens1, lens2
         self.massratio = lens1.mass/lens2.mass
         self.mu1 = self.massratio/(1+self.massratio)
         self.mu2 = 1/(1+self.massratio)
         self.betax, self.betay = None, None
-        self.beta = beta # D12*Ds/D1s/D2 from Erdl & Schneider 1993
+        # Erdl & Schneider 1993, equ (3), (4)
+        M1 = self.mu1
+        M2 = self.mu2
+        D1s, D2, D2s, D1 = 1 - self.lens1.dis, self.lens2.dis, 1 - self.lens2.dis, self.lens1.dis
+        self.m1 = M1/(M1+D2s*D1/(D1s*D2)*M2)
+        self.m2 = 1 - self.m1
+        self.beta = (D2 - D1)/(D1s*D2) # D12*Ds/D1s/D2 from Erdl & Schneider 1993
+
     
     def inverse_ray_shooting_diffz(self, thetax, thetay):
         # lens1.pos should be (0,0)
         r_2 = (thetax - self.lens1.pos[0])**2 + (thetay - self.lens1.pos[1])**2
-        x2_x = thetax - self.mu1*self.beta*thetax/r_2
-        x2_y = thetay - self.mu1*self.beta*thetay/r_2
+        x2_x = thetax - self.m1*self.beta*thetax/r_2
+        x2_y = thetay - self.m1*self.beta*thetay/r_2
         r2_2 = (x2_x - self.lens2.pos[0])**2 + (x2_y - self.lens2.pos[1])**2
-        self.betax = thetax - self.mu1*thetax/r_2 - self.mu2*(x2_x - self.lens2.pos[0])/r2_2
-        self.betay = thetay - self.mu1*thetay/r_2 - self.mu2*(x2_y - self.lens2.pos[1])/r2_2
-
+        self.betax = thetax - self.m1*thetax/r_2 - self.m2*(x2_x - self.lens2.pos[0])/r2_2
+        self.betay = thetay - self.m1*thetay/r_2 - self.m2*(x2_y - self.lens2.pos[1])/r2_2
 
     def inverse_ray_shooting(self, thetax, thetay):
         r1_2 = (thetax - self.lens1.pos[0])**2 + (thetay - self.lens1.pos[1])**2

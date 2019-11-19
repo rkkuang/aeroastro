@@ -1,6 +1,6 @@
 from two_pointM_lens_inverse_ray_shoot import *
 import numpy as np
-from utils import genxy
+from utils import *
 import matplotlib.pyplot as plt
 # from matplotlib import animation as ani
 from matplotlib.animation import FuncAnimation, writers
@@ -10,20 +10,28 @@ import time
 
 cmap = plt.cm.get_cmap('hot')
 
-testNum = 60
+testNum = 30
 # lens1massRange = np.linspace(1, -0.7 , testNum)
-betaRange1 = np.linspace(0, 0.25 , 15, endpoint=False)
-betaRange2 = np.linspace(0.25, 0.5 , 15, endpoint=False)
-betaRange3 = np.linspace(0.5, 0.75 , 15, endpoint=False)
-betaRange4 = np.linspace(0.75, 1 , 15, endpoint=False)
-frameinputs = [betaRange1,betaRange2,betaRange3,betaRange4]
-ALLbeta = np.concatenate((betaRange1,betaRange2,betaRange3,betaRange4),axis=0)
+# betaRange1 = np.linspace(0, 0.25 , 15, endpoint=False)
+# betaRange2 = np.linspace(0.25, 0.5 , 15, endpoint=False)
+# betaRange3 = np.linspace(0.5, 0.75 , 15, endpoint=False)
+# betaRange4 = np.linspace(0.75, 1 , 15, endpoint=False)
+# frameinputs = [betaRange1,betaRange2,betaRange3,betaRange4]
+# ALLbeta = np.concatenate((betaRange1,betaRange2,betaRange3,betaRange4),axis=0)
+
+D1D2Range1 = genD1D2(0.01, int(testNum)) + genD1D2(0.05, testNum)
+D1D2Range2 = genD1D2(0.35, testNum*2)
+D1D2Range3 = genD1D2(0.65, testNum*2)
+D1D2Range4 = genD1D2(0.95, testNum) + genD1D2(0.99, testNum)
+frameinputs = [D1D2Range1,D1D2Range2,D1D2Range3,D1D2Range4]
+ALLD1D2 = D1D2Range1+D1D2Range2+D1D2Range3+D1D2Range4
+
 
 
 # massratio = mass1/mass2 change from 2 to -2, 
 # mass2 fixed to 1, then only need to change mass1 from 2 to -2
-lens1 = Onelens(2, (0,0))
-lens2 = Onelens(1, (0.6,0))
+lens1 = Onelens(1, (0,0), 0)
+lens2 = Onelens(1, (0.6,0), 0)
 
 
 
@@ -34,9 +42,10 @@ htmlname = "./resimgs/2pointmass_diffz/"+testinfo+'.html'
 gifname = "./resimgs/2pointmass_diffz/"+testinfo+'.gif'
 
 
-xlim, ylim =(-0.5,2.5), (-1.5,1.5)
+xlim, ylim = (-1.5,1.5), (-1.5,1.5)
+srcxlim, srcylim = (-1.5,1.5), (-1.5, 1.5)
 ImgSize = (1026,1026) # raw, colume
-thetax, thetay = genxy(xlim=xlim,ylim=ylim,num=3000)
+thetax, thetay = genxy(xlim=xlim,ylim=ylim,num=300)
 # fig, axs = plt.figure()
 fig, axs = plt.subplots(1, 1,figsize=(8,6))
 
@@ -45,29 +54,32 @@ def compIMGs(a):
     global cntIM
     
     print("A new core for calculating images is started")
-    betaR = frameinputs[a]
+    D1D2 = frameinputs[a]
     subIMGs = {}
-    for beta in betaR:
-        sys.stdout.write('done %d/%d\r' % (cntIM, testNum))
+    for d1d2 in D1D2:
+        sys.stdout.write('done %d/%d\r' % (cntIM, len(ALLD1D2)))
         cntIM += 1
-
-        twolens = Twolenses(lens1, lens2, beta=beta)
+        
+        lens1.dis = d1d2[0]
+        lens2.dis = d1d2[1]
+        twolens = Twolenses(lens1, lens2)
         twolens.inverse_ray_shooting_diffz(thetax, thetay)
-        srcplaneIMG = twolens.img_mapping(twolens.betax, twolens.betay, xlim, ylim, ImgSize)
-        subIMGs[beta] = srcplaneIMG
+        srcplaneIMG = twolens.img_mapping(twolens.betax, twolens.betay, srcxlim, srcylim, ImgSize)
+        subIMGs[d1d2] = srcplaneIMG
     return subIMGs
 
 cnt = 0
-def update(beta):
+def update(d1d2):
     global cnt
-    sys.stdout.write('done %d/%d\r' % (cnt, testNum))
+    sys.stdout.write('done %d/%d\r' % (cnt, len(ALLD1D2)))
     cnt += 1
     global IMGs
     # title = r"Two point mass lenses, with mass ratio $\mu_1/\mu_2=${:.2f} and $x_1=${:.1f}, $x_2 =${:.1f}".format(lens1mass, lens1.pos[0], lens2.pos[0])
-    title = "Two point mass lenses, with mass ratio:\n"+r" $\mu_1/\mu_2=${:.2f} and $x_1=${:.1f}, $x_2 =${:.1f}, $\beta=D12*Ds/(D1s*D2)={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], beta)
+    # title = "Two point mass lenses, with mass ratio:\n"+r" $\mu_1/\mu_2=${:.2f} and $x_1=${:.1f}, $x_2 =${:.1f}, $\beta=D12*Ds/(D1s*D2)={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], beta)
+    title = "Two point mass lenses, with mass ratio:\n"+r" $M_1/M_2=${:.2f} and $x_1=${:.1f}, $x_2 =${:.1f}, $D1={:.2f}$, $D2={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], d1d2[0], d1d2[1])
     fig.suptitle(title)
     axs.clear()
-    axs.imshow(IMGs[beta], origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
+    axs.imshow(IMGs[d1d2], origin='lower',cmap=cmap, extent=[srcxlim[0],srcxlim[1],srcylim[0],srcylim[1]])
 
 pool = ProcessPool(nodes=4)
 results = pool.imap(lambda a: compIMGs(a), range(4))
@@ -80,7 +92,7 @@ for img in resultIMGs:
 print(len(IMGs),"len IMGs")
 
 
-ani = FuncAnimation(fig, update, frames = ALLbeta,blit = False, interval=1000/2, save_count=300)
+ani = FuncAnimation(fig, update, frames = ALLD1D2, blit = False, interval=1000/2, save_count=300)
 
 # save it into html5 format (need ffmpeg)
 print('Begin saving html5\n')
@@ -106,4 +118,4 @@ writer = FFMpegWriter(fps=5, metadata=dict(title='None', artist='None', comment=
 ani.save(mp4name, writer=writer,dpi=240)
 print('Finished.')
 
-plt.show()
+# plt.show()

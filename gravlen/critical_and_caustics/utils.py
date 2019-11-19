@@ -27,3 +27,11 @@ def spescatter(x,y,xlabel="x",ylabel="y",title="title",c="b",s=1,issqure=True,xy
     if xylim:
         plt.ylim(-xylim,xylim)
         plt.xlim(-xylim,xylim)
+
+def genD1D2(D1, num):
+    # generate a list of (D1, D2) while D2 > D1
+    D2nplist = np.linspace(D1, 1, num)
+    res = []
+    for d2 in D2nplist:
+        res.append((D1, d2))
+    return res
