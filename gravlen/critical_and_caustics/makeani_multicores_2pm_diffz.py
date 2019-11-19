@@ -8,6 +8,11 @@ import sys
 from pathos.pools import ProcessPool
 import time
 
+mass1 = float(sys.argv[1])
+pos2 = float(sys.argv[2])
+# print(mass1, pos2)
+# input()
+
 cmap = plt.cm.get_cmap('hot')
 
 testNum = 30
@@ -30,8 +35,10 @@ ALLD1D2 = D1D2Range1+D1D2Range2+D1D2Range3+D1D2Range4
 
 # massratio = mass1/mass2 change from 2 to -2, 
 # mass2 fixed to 1, then only need to change mass1 from 2 to -2
-lens1 = Onelens(1, (0,0), 0)
-lens2 = Onelens(1, (0.6,0), 0)
+# mass1 = 1
+# pos2 = 0.6
+lens1 = Onelens(mass1, (0,0), 0)
+lens2 = Onelens(1, (pos2,0), 0)
 
 
 
@@ -45,7 +52,7 @@ gifname = "./resimgs/2pointmass_diffz/"+testinfo+'.gif'
 xlim, ylim = (-1.5,1.5), (-1.5,1.5)
 srcxlim, srcylim = (-1.5,1.5), (-1.5, 1.5)
 ImgSize = (1026,1026) # raw, colume
-thetax, thetay = genxy(xlim=xlim,ylim=ylim,num=300)
+thetax, thetay = genxy(xlim=xlim,ylim=ylim,num=5000)
 # fig, axs = plt.figure()
 fig, axs = plt.subplots(1, 1,figsize=(8,6))
 
@@ -114,8 +121,28 @@ print('Finished.\n')
 cnt = 0
 print('Begin saving mp4')
 FFMpegWriter = writers['ffmpeg']
+
 writer = FFMpegWriter(fps=5, metadata=dict(title='None', artist='None', comment="None"), bitrate=9600)
 ani.save(mp4name, writer=writer,dpi=240)
 print('Finished.')
 
 # plt.show()
+
+
+
+# dpcg cannot use FFMpegWriter, https://github.com/matplotlib/matplotlib/issues/12769
+#That's what I suspected. What happens if you use a FFMpegFileWriter instead of 
+# a FFMpegWriter, i.e. writer = FFMpegFileWriter(fps=15, metadata=dict(artist='Me'), bitrate=1800)
+# from matplotlib.animation import FFMpegFileWriter
+# another bug: RuntimeError: Error creating movie, return code: 1
+# : https://stackoverflow.com/questions/34860038/making-animations-by-matplotlib-and-saving-the-video-files
+# I finally worked it out.It seemed that I missed two important lines. 
+# mpl.rcParams['animation.ffmpeg_path'] = 'C:\\ffmpeg\\bin\\ffmpeg.exe' 
+# This line is correct.Both '\\' and '/' work in Windows,as far as 
+# I've tried. I add mywriter = animation.FFMpegWriter()at the bottom and 
+# modify anim.save('seawave_1d_ani.mp4',writer='ffmpeg',fps=30) 
+# by anim.save('seawave_1d_ani.mp4',writer=mywriter,fps=30).
+# It worked at last,thanks to Using FFmpeg and IPython. 
+# Also grateful to those friends who helped me with this problem.
+
+
