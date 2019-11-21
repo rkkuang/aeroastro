@@ -61,7 +61,7 @@ gifname = "./resimgs/2pointmass_samez/"+testinfo+'.gif'
 
 xlim, ylim =(-3.5,2), (-3,3)
 ImgSize = (1026,1026) # raw, colume
-thetax, thetay = genxy(xlim=xlim,ylim=ylim,num=3000)
+thetax, thetay = genxy(xlim=xlim,ylim=ylim,num=30)
 # fig, axs = plt.figure()
 fig, axs = plt.subplots(1, 1,figsize=(8,6))
 

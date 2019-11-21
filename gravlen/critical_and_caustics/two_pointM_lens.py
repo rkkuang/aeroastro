@@ -15,7 +15,7 @@ and his book: https://www.springer.com/gp/book/9783642540820#aboutAuthors
 '''
 import numpy as np 
 import matplotlib.pyplot as plt
-
+from utils import *
 
 
 
@@ -85,8 +85,8 @@ class GravLens():
 
             #plot, r"$r_1=r\cos\phi$",r"$r_2=r\sin\phi$"
             spescatter(np.concatenate((self.r1,specialr1),axis=0),np.concatenate((self.r2,specialr2),axis=0),
-                xlabel = xlabel,ylabel=ylabel,title=title)
-            plt.scatter([-self.X,self.X],[0,0],s=100,c="g",marker="x",xylim=xylim)
+                xlabel = xlabel,ylabel=ylabel,title=title,xylim=xylim)
+            plt.scatter([-self.X,self.X],[0,0],s=100,c="g",marker="x")
 
     def gen_caustic_lines(self, num = 100,title="title",xlabel="x",ylabel="y",xylim=2):
         if self.massratio == 0.5:

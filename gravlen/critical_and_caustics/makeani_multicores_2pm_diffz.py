@@ -7,6 +7,7 @@ from matplotlib.animation import FuncAnimation, writers
 import sys
 from pathos.pools import ProcessPool
 import time
+import os
 
 mass1 = float(sys.argv[1])
 pos2 = float(sys.argv[2])
@@ -44,13 +45,16 @@ lens2 = Onelens(1, (pos2,0), 0)
 
 massratio = lens1.mass/lens2.mass
 testinfo = "x1_{:.1f}x2_{:.1f}massratio_{:.1f}".format(lens1.pos[0],lens2.pos[0],massratio)
-mp4name = "./resimgs/2pointmass_diffz/"+testinfo+'.mp4'
-htmlname = "./resimgs/2pointmass_diffz/"+testinfo+'.html'
-gifname = "./resimgs/2pointmass_diffz/"+testinfo+'.gif'
+dirs = "./resimgs/2pointmass_diffz/"
+if not os.path.exists(dirs):
+    os.makedirs(dirs)
+mp4name = dirs+testinfo+'.mp4'
+htmlname = dirs+testinfo+'.html'
+gifname = dirs+testinfo+'.gif'
 
 
-xlim, ylim = (-1.5,1.5), (-1.5,1.5)
-srcxlim, srcylim = (-1.5,1.5), (-1.5, 1.5)
+xlim, ylim = (-1.5,2.5), (-1.5,1.5)
+srcxlim, srcylim = (-0.5,2.5), (-1.5, 1.5)
 ImgSize = (1026,1026) # raw, colume
 thetax, thetay = genxy(xlim=xlim,ylim=ylim,num=5000)
 # fig, axs = plt.figure()
