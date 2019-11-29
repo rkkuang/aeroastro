@@ -234,13 +234,13 @@ if __name__ == '__main__':
     # diff redshift
     import sys
     mass1 = float(sys.argv[1])
-    lens1 = Onelens(mass1, (-0.5,0))
-    lens2 = Onelens(1, (0.5,0))
+    lens1 = Onelens(mass1, (-0.3,0))
+    lens2 = Onelens(1, (0.3,0))
     d1d2 = (0,0)
     lens1.dis = d1d2[0]
     lens2.dis = d1d2[1]
     massratio = lens1.mass/lens2.mass
-    xlim, ylim = (-3.5,3.5), (-3.5,3.5)
+    xlim, ylim = (-2.5,2.5), (-2.5,2.5)
     # srcxlim, srcylim = (-4,4), (-4, 4)
     ImgSize = (512,512) # raw, colume
     import time
@@ -262,7 +262,15 @@ if __name__ == '__main__':
     t0 = time.time()
     srcplaneIMG, imgplaneIMG = twolens.img_mapping_inone(thetax, thetay,twolens.betax, twolens.betay, xlim, ylim, ImgSize,valarr1 = twolens.mag, valarr2 = np.ones([len(thetax),]))
     t1 = time.time()
-    srcplaneIMG += 1
+
+    where_smaller_than1 = np.zeros(srcplaneIMG.shape)
+    where_smaller_than1[:,:] = srcplaneIMG[:,:]
+    where_smaller_than1[where_smaller_than1>1] = 0
+
+    # where_smaller_than1 = srcplaneIMG
+    # where_smaller_than1[where_smaller_than1>1] = 0
+
+    # srcplaneIMG += 1
     print("time spent on img_mapping_inone: {}".format(t1-t0))
     # imgplaneIMG = np.log10(imgplaneIMG)
     # imgplaneIMG /= np.min(imgplaneIMG)
@@ -445,5 +453,16 @@ if __name__ == '__main__':
     # ax1.set_xticklabels([])
     # # ax2.autoscale() ## call autoscale if needed
 
-
+    # plt.figure()
+    # plt.imshow(where_smaller_than1)
+    # plt.title()
+    fig = plt.figure()
+    plt.subplot(111)
+    cmap = plt.cm.get_cmap('viridis') # 'Paired', viridis, gist_ncar, 
+    plt.imshow(where_smaller_than1, origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
+    # title = "Two point mass lenses, src plane (log scale), with mass ratio:\n"+r" $M_1/M_2=${:.3f} and $x_1=${:.1f}, $x_2 =${:.1f}, $D1={:.2f}$, $D2={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], d1d2[0], d1d2[1])
+    # title = ""
+    title = "Region where magnification < 1, with mass ratio:\n"+r" $M_1/M_2=${:.3f} and $x_1=${:.1f}, $x_2 =${:.1f}, $D1={:.2f}$, $D2={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], d1d2[0], d1d2[1])
+    plt.title(title)
+    plt.colorbar()
     plt.show()
