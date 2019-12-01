@@ -361,8 +361,8 @@ waitKey(0);
 
 // waitKey(5000);
 
-imwrite("savedimgs/srcplaneIMG.png", srcplaneIMG); // A JPG FILE IS BEING SAVED
-imwrite("savedimgs/imgplaneIMG.png", imgplaneIMG); // A JPG FILE IS BEING SAVED
+// imwrite("savedimgs/srcplaneIMG.png", srcplaneIMG); // A JPG FILE IS BEING SAVED
+// imwrite("savedimgs/imgplaneIMG.png", imgplaneIMG); // A JPG FILE IS BEING SAVED
 
 return 0;
 }
