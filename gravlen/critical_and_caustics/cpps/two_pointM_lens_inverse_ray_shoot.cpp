@@ -224,6 +224,12 @@ parser.add_argument("-p", "an float number, position X");
   }
 
 
+if (parser.exists("h")){
+// cout <<"help";
+return 0;
+}
+
+
 raynum_1side = parser.get<unsigned short int>("n");
 imgsize = parser.get<unsigned short int>("s");
 mass1 = parser.get<float>("m");
