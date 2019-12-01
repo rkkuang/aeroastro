@@ -182,18 +182,17 @@ void Twolenses::get_imgs_lessmem(Mat srcplaneIMG, Mat srcplaneIMG_withoutlens, M
     thetax += incx;
 }
 
-// // srcplaneIMG /= srcplaneIMG_withoutlens;
+// srcplaneIMG /= srcplaneIMG_withoutlens;
 // Mat result;
 // result = srcplaneIMG.clone();
-//     // int rowNumber = result.rows;
-//     // int colNumber = result.cols;
-//     for (int i = 0; i < ImgSize[0]; i++)
-//     {
-//         for (int j = 0; j < ImgSize[1]; j++){
-//         srcplaneIMG.at<uchar>(j,i) = result.at<uchar>(j,i) / srcplaneIMG_withoutlens.at<uchar>(j,i);
-//         }
-
-//     }
+    // int rowNumber = result.rows;
+    // int colNumber = result.cols;
+    for (int i = 0; i < ImgSize[0]; i++)
+    {
+        for (int j = 0; j < ImgSize[1]; j++){
+        srcplaneIMG.at<float>(j,i) = srcplaneIMG.at<float>(j,i) / srcplaneIMG_withoutlens.at<float>(j,i);
+        }
+    }
 
 
 // return void;
