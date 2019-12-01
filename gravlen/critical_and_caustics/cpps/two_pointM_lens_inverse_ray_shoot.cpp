@@ -1,6 +1,11 @@
 #include <iostream>
+#include "argparse.h"
 #include <math.h>
 #include<cmath>
+#include <opencv2/core.hpp>
+#include <opencv2/imgproc.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
 // #include<string>
 // #include <array>
 
@@ -14,6 +19,8 @@ using namespace cv;
 //error: ISO C++ forbids declaration of ‘inverse_ray_shooting’ with no type [-fpermissive]
 //https://stackoverflow.com/questions/7929477/explain-the-error-iso-c-forbids-declaration-of-personlist-with-no-type
 
+//https://segmentfault.com/a/1190000015653101
+//C++下的OpenCV中Mat类型存储的图像格式
 
 const float PI = std::atan(1.0)*4;
 const float arcsec2rad = PI/180/3600;
@@ -157,17 +164,17 @@ void Twolenses::get_imgs_lessmem(Mat srcplaneIMG, Mat srcplaneIMG_withoutlens, M
 
     if ((bi>=0 && bi<ImgSize[1])&&(bj>=0&&bj<ImgSize[0])){
     // *(srcplaneIMG.data + srcplaneIMG.step[0] * bi + srcplaneIMG.step[1] * bj + srcplaneIMG.elemSize1() * 0) += mag;
-    srcplaneIMG.at<uchar>(bj,bi) += mag;
+    srcplaneIMG.at<float>(bj,bi) += mag;
 
 }
       
     // srcplaneIMG_withoutlens[j, i]+=1
     if ((i>=0 && i<ImgSize[1])&&(j>=0&&j<ImgSize[0])){
     // *(srcplaneIMG_withoutlens.data + srcplaneIMG_withoutlens.step[0] * i + srcplaneIMG_withoutlens.step[1] * j + srcplaneIMG_withoutlens.elemSize1() * 0) += 1;
-    srcplaneIMG_withoutlens.at<uchar>(j,i) += 1;
+    srcplaneIMG_withoutlens.at<float>(j,i) += 1.f;
     // imgplaneIMG[j, i]+=mag    
     // *(imgplaneIMG.data + imgplaneIMG.step[0] * i + imgplaneIMG.step[1] * j + imgplaneIMG.elemSize1() * 0) += mag;
-    imgplaneIMG.at<uchar>(j,i) += mag;
+    imgplaneIMG.at<float>(j,i) += mag;
 }
 
     thetay += incy;
@@ -192,24 +199,65 @@ void Twolenses::get_imgs_lessmem(Mat srcplaneIMG, Mat srcplaneIMG_withoutlens, M
 // return void;
 }
 
+//https://github.com/jamolnng/argparse
+//A simple C++ header only command line argument parser
+//
 
-int main()
+
+int main(int argc, char* argv[])
 {
-// using namespace PersonNamespace;
-float pos1[2] = {-0.3, 0};
-float mass1 = 1;
-Onelens lens1(mass1, pos1 , 0);
 
-float pos2[2] = {0.3, 0};
+float mass1, posX;
+unsigned short int raynum_1side;
+unsigned short int imgsize;
+
+ArgumentParser parser("Argument parser example");
+parser.add_argument("-m", "an float number, mass1");
+parser.add_argument("-s", "an int, image size");
+parser.add_argument("-n", "an int, ray number");
+parser.add_argument("-p", "an float number, position X");
+  try {
+    parser.parse(argc, argv);
+  } catch (const ArgumentParser::ArgumentNotFound& ex) {
+    std::cout << ex.what() << std::endl;
+    return 0;
+  }
+
+
+raynum_1side = parser.get<unsigned short int>("n");
+imgsize = parser.get<unsigned short int>("s");
+mass1 = parser.get<float>("m");
+posX = parser.get<float>("p");
+// cout<< mass1 << "\n"<<raynum_1side << "\n"<<imgsize << "\n";
+
+// using namespace PersonNamespace;
+float pos1[2] = {-posX, 0};
+// float mass1 = 1;
+
+
+// cout<< argv[1]<< ","<<*argv[1]<< ","<< argc<< "\n";
+// char *temp = argv[1];
+// stringstream ss;
+// ss<<argv[1];
+// ss>>mass1;
+// mass1 = (float) (*temp);
+// cout<< mass1 << "\n";
+
+
+
+Onelens lens1(mass1, pos1 , 0);
+float pos2[2] = {posX, 0};
 Onelens lens2(1.0, pos2 , 0);
 
 float massratio = lens1.mass/lens2.mass;
 float xlim[2] = {-2.5,2.5};
 float ylim[2] = {-2.5,2.5};
-unsigned short int ImgSize[2] = {512, 512}; // raw, colume
+
+unsigned short int imshowsize = 512;
+unsigned short int ImgSize[2] = {imgsize, imgsize}; // raw, colume
 //unsigned short int    2 个字节   0 到 65,535
 
-unsigned short int raynum_1side = 10000;
+
 
 // THETAX, THETAY = genxy(xlim=xlim,ylim=ylim,num=num)
 // def genxy(xlim=(-1,1),ylim=(-1,1),num=100):
@@ -222,9 +270,13 @@ unsigned short int raynum_1side = 10000;
 Twolenses twolens( &lens1,  &lens2);
 
 //Mat Matrix_name(行数，列数，存储元素的数据类型，每个矩阵点的通道数)
-Mat srcplaneIMG(ImgSize[0], ImgSize[1], CV_16U, 1);
-Mat srcplaneIMG_withoutlens(ImgSize[0], ImgSize[1], CV_16U, 1);
-Mat imgplaneIMG(ImgSize[0], ImgSize[1], CV_16U, 1);
+// Mat srcplaneIMG(ImgSize[0], ImgSize[1], CV_8UC1, 1);
+// Mat srcplaneIMG_withoutlens(ImgSize[0], ImgSize[1], CV_8UC1, 1);
+// Mat imgplaneIMG(ImgSize[0], ImgSize[1], CV_8UC1, 1);
+
+Mat srcplaneIMG(ImgSize[0], ImgSize[1], CV_32F, 1);
+Mat srcplaneIMG_withoutlens(ImgSize[0], ImgSize[1], CV_32F, 1);
+Mat imgplaneIMG(ImgSize[0], ImgSize[1], CV_32F, 1);
 
 twolens.get_imgs_lessmem(srcplaneIMG, srcplaneIMG_withoutlens, imgplaneIMG, ImgSize, xlim, ylim, raynum_1side);
 
@@ -232,11 +284,64 @@ twolens.get_imgs_lessmem(srcplaneIMG, srcplaneIMG_withoutlens, imgplaneIMG, ImgS
 // uchar     vec3b0     = img.at<cv::Vec3b>(0,0)[0];
 //https://blog.csdn.net/xiaowei_cqu/article/details/19839019 OpenCV】访问Mat中每个像素的值（新）
 
-// namedWindow("1.picture one");//窗口显示图片
-imshow("srcplaneIMG", srcplaneIMG);
 
-// namedWindow("2.picture two");
-imshow("imgplaneIMG", imgplaneIMG);
+Mat srcplaneIMG_8U, imgplaneIMG_8U;
+srcplaneIMG.convertTo( srcplaneIMG_8U, CV_8U);
+imgplaneIMG.convertTo( imgplaneIMG_8U, CV_8U);
+
+// cerr << srcplaneIMG << endl;
+// cerr << imgplaneIMG << endl;
+
+// namedWindow("1.picture one");//窗口显示图片
+// imshow("srcplaneIMG", srcplaneIMG_8U);
+
+// // namedWindow("2.picture two");
+// imshow("imgplaneIMG", imgplaneIMG_8U);
+
+
+// https://docs.opencv.org/3.4/d3/d50/group__imgproc__colormap.html
+// Holds the colormap version of the image:
+Mat srcplaneIMG_color, imgplaneIMG_color;
+// Apply the colormap:
+applyColorMap(srcplaneIMG_8U, srcplaneIMG_color, COLORMAP_JET);
+applyColorMap(imgplaneIMG_8U, imgplaneIMG_color, COLORMAP_JET);
+// Show the result:
+
+// Mat srcplaneIMG_color_resize, imgplaneIMG_color_resize;
+// Size size(imshowsize,imshowsize);//the dst image size,e.g.100x100
+// resize(srcplaneIMG_color, srcplaneIMG_color_resize, size);
+// resize(imgplaneIMG_color,imgplaneIMG_color_resize,size);
+
+//https://blog.csdn.net/m0_37303351/article/details/78944904
+//调整OpenCV弹出窗口大小
+//https://blog.csdn.net/wuyoy520/article/details/47111295
+
+// namedWindow("srcplaneIMG",WINDOW_NORMAL | WINDOW_KEEPRATIO | WINDOW_GUI_EXPANDED);
+namedWindow("srcplaneIMG", 0);
+resizeWindow("srcplaneIMG", imshowsize, imshowsize);
+// resize(srcplaneIMG_color, outImage,  Size(256,256),INTER_NEAREST);
+imshow("srcplaneIMG", srcplaneIMG_color);
+// cvResizeWindow("srcplaneIMG", 320, 320);
+
+// namedWindow("imgplaneIMG",WINDOW_NORMAL | WINDOW_KEEPRATIO | WINDOW_GUI_EXPANDED);
+namedWindow("imgplaneIMG", 0);
+resizeWindow("imgplaneIMG", imshowsize, imshowsize);
+// resize(_inputImage, outImage,  Size(256,256),INTER_NEAREST);
+imshow("imgplaneIMG", imgplaneIMG_color);
+// cvResizeWindow("imgplaneIMG", 320, 320);
+
+// https://docs.opencv.org/3.2.0/d7/dfc/group__highgui.html
+// cout << "OpenCV version : " << CV_VERSION << endl;
+// cout << "Major version : " << CV_MAJOR_VERSION << endl;
+// cout << "Minor version : " << CV_MINOR_VERSION << endl;
+// cout << "Subminor version : " << CV_SUBMINOR_VERSION << endl;
+// OpenCV version : 3.2.0
+// Major version : 3
+// Minor version : 2
+// Subminor version : 0
+
+// SetWindowPos(yourhwnd,0,0,0,newWidth,newHeight,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
+waitKey(0);
 
 
 // cout << "\nmassratio: " << massratio;
@@ -250,6 +355,9 @@ imshow("imgplaneIMG", imgplaneIMG);
 // cout << "\nlens2.dis: " << twolens.lens2->dis;
 
 // waitKey(5000);
-waitKey();
+
+imwrite("savedimgs/srcplaneIMG.png", srcplaneIMG); // A JPG FILE IS BEING SAVED
+imwrite("savedimgs/imgplaneIMG.png", imgplaneIMG); // A JPG FILE IS BEING SAVED
+
 return 0;
 }
