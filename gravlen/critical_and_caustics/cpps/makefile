@@ -4,8 +4,9 @@
 # # g++ -c 只编译不链接 
 
 main:two_pointM_lens_inverse_ray_shoot.cpp
-	g++ two_pointM_lens_inverse_ray_shoot.cpp  `pkg-config opencv --libs --cflags` -o main
-
+	g++ two_pointM_lens_inverse_ray_shoot.cpp  `pkg-config opencv4 --libs --cflags` -o main
+mainn:npM_lens_inverse_ray_shoot.cpp 
+	g++ npM_lens_inverse_ray_shoot.cpp `pkg-config opencv4 --libs --cflags` -o mainn
 
 # test:main.o T1.o
 #     g++ -o test main.o T1.o

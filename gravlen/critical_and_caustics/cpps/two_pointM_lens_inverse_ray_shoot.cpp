@@ -22,6 +22,9 @@ using namespace cv;
 //https://segmentfault.com/a/1190000015653101
 //C++下的OpenCV中Mat类型存储的图像格式
 
+// https://docs.opencv.org/2.4/doc/tutorials/highgui/video-write/video-write.html
+// creat video using opencv
+
 const float PI = std::atan(1.0)*4;
 const float arcsec2rad = PI/180/3600;
 const float rad2arcsec = 180*3600/PI;
@@ -210,11 +213,11 @@ float mass1, posX;
 unsigned short int raynum_1side;
 unsigned short int imgsize;
 
-ArgumentParser parser("Argument parser example");
-parser.add_argument("-m", "an float number, mass1");
+ArgumentParser parser("Argument parser");
+parser.add_argument("-m", "an float number, mass ratio of the two point masses");
 parser.add_argument("-s", "an int, image size");
-parser.add_argument("-n", "an int, ray number");
-parser.add_argument("-p", "an float number, position X");
+parser.add_argument("-n", "an int, ray number in one side");
+parser.add_argument("-p", "an float number, position X of one of the point masses");
   try {
     parser.parse(argc, argv);
   } catch (const ArgumentParser::ArgumentNotFound& ex) {
@@ -224,7 +227,9 @@ parser.add_argument("-p", "an float number, position X");
 
 
 if (parser.exists("h")){
-// cout <<"help";
+cout <<"Two point mass lenses, ploting the Critical lines and Caustics"<<endl;
+// cout<<"\b \b";
+// cin.get();
 return 0;
 }
 
@@ -236,7 +241,7 @@ posX = parser.get<float>("p");
 // cout<< mass1 << "\n"<<raynum_1side << "\n"<<imgsize << "\n";
 
 // using namespace PersonNamespace;
-float pos1[2] = {-posX, 0};
+float pos1[2] = {posX, 0};
 // float mass1 = 1;
 
 
@@ -251,14 +256,19 @@ float pos1[2] = {-posX, 0};
 
 
 Onelens lens1(mass1, pos1 , 0);
-float pos2[2] = {posX, 0};
+float pos2[2] = {-posX, 0};
 Onelens lens2(1.0, pos2 , 0);
 
 float massratio = lens1.mass/lens2.mass;
-float xlim[2] = {-2.5,2.5};
-float ylim[2] = {-2.5,2.5};
+float lim = 2.5;
+if(abs(posX)>=1.5){lim = abs(posX)+2.5;}
+if((massratio)<-0.5){lim = abs(posX)+2.5;}
+float xlim[2] = {-lim,lim};
+float ylim[2] = {-lim,lim};
+// float xlim[2] = {-2.5,2.5};
+// float ylim[2] = {-2.5,2.5};
 
-unsigned short int imshowsize = 512;
+unsigned short int imshowsize = 640;
 unsigned short int ImgSize[2] = {imgsize, imgsize}; // raw, colume
 //unsigned short int    2 个字节   0 到 65,535
 
@@ -308,8 +318,8 @@ imgplaneIMG.convertTo( imgplaneIMG_8U, CV_8U);
 // Holds the colormap version of the image:
 Mat srcplaneIMG_color, imgplaneIMG_color;
 // Apply the colormap:
-applyColorMap(srcplaneIMG_8U, srcplaneIMG_color, COLORMAP_JET);
-applyColorMap(imgplaneIMG_8U, imgplaneIMG_color, COLORMAP_JET);
+applyColorMap(srcplaneIMG_8U, srcplaneIMG_color, COLORMAP_VIRIDIS);
+applyColorMap(imgplaneIMG_8U, imgplaneIMG_color, COLORMAP_VIRIDIS);
 // Show the result:
 
 // Mat srcplaneIMG_color_resize, imgplaneIMG_color_resize;
@@ -322,17 +332,19 @@ applyColorMap(imgplaneIMG_8U, imgplaneIMG_color, COLORMAP_JET);
 //https://blog.csdn.net/wuyoy520/article/details/47111295
 
 // namedWindow("srcplaneIMG",WINDOW_NORMAL | WINDOW_KEEPRATIO | WINDOW_GUI_EXPANDED);
-namedWindow("srcplaneIMG", 0);
-resizeWindow("srcplaneIMG", imshowsize, imshowsize);
+namedWindow("srcplaneIMG-Caustics", 0);
+resizeWindow("srcplaneIMG-Caustics", imshowsize, imshowsize);
+moveWindow("srcplaneIMG-Caustics", imshowsize+30, 0);
 // resize(srcplaneIMG_color, outImage,  Size(256,256),INTER_NEAREST);
-imshow("srcplaneIMG", srcplaneIMG_color);
+imshow("srcplaneIMG-Caustics", srcplaneIMG_color);
 // cvResizeWindow("srcplaneIMG", 320, 320);
 
 // namedWindow("imgplaneIMG",WINDOW_NORMAL | WINDOW_KEEPRATIO | WINDOW_GUI_EXPANDED);
-namedWindow("imgplaneIMG", 0);
-resizeWindow("imgplaneIMG", imshowsize, imshowsize);
+namedWindow("imgplaneIMG-Critical lines", 0);
+resizeWindow("imgplaneIMG-Critical lines", imshowsize, imshowsize);
+moveWindow("imgplaneIMG-Critical lines", 0, 0);
 // resize(_inputImage, outImage,  Size(256,256),INTER_NEAREST);
-imshow("imgplaneIMG", imgplaneIMG_color);
+imshow("imgplaneIMG-Critical lines", imgplaneIMG_color);
 // cvResizeWindow("imgplaneIMG", 320, 320);
 
 // https://docs.opencv.org/3.2.0/d7/dfc/group__highgui.html

@@ -6,9 +6,11 @@ font2 = {'family': 'Times New Roman',
          'size': 16,
          }
 
-def genxy(xlim=(-1,1),ylim=(-1,1),num=100):
-    x = np.linspace(xlim[0],xlim[1],num)
-    y = np.linspace(ylim[0],ylim[1],num)
+def genxy(xlim=(-1,1),ylim=(-1,1),num=100,datatype = np.float64):
+    #.astype(np.float32) -- 3.6G -> 8G, Maximum Magnification:  266846.88
+    #.astype(np.float64) -- 3.6G -> 9G, Maximum Magnification:  328266.3319540504
+    x = np.linspace(xlim[0],xlim[1],num).astype(datatype)#np.single, np.double
+    y = np.linspace(ylim[0],ylim[1],num).astype(datatype)
     X,Y = np.meshgrid(x,y)
     # return X.reshape(1,-1), Y.reshape(1,-1) # shape: (1,10)
     return X.reshape(1,-1)[0], Y.reshape(1,-1)[0] # shape: (3,)
