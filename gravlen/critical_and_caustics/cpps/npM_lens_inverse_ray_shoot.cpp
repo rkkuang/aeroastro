@@ -466,21 +466,21 @@ generateRandomArray(ys, pointsNum, ys_range[0],ys_range[1],time(NULL));
 // float ys[pointsNum]={0,0};
 
 
-// unsigned short int pointsNum2 = 9;
-// float scalexy = 0.8;
-// float scalem = -0.2;//-0.2;
-// float masses2[pointsNum2]= {1,1*scalem,1,1*scalem,1,1*scalem,1,1*scalem,1};
-// float xs2[pointsNum2]= {-1,0,1,-1,0,1,-1,0,1};
-// float ys2[pointsNum2]={1,1,1,0,0,0,-1,-1,-1};
-// for( int i=0;i<pointsNum2;i++ ){
-//     xs2[i]*=scalexy;
-//     ys2[i]*=scalexy;
-// }
+unsigned short int pointsNum2 = 9;
+float scalexy = 0.3;
+float scalem = -1;//-0.2;
+float masses2[pointsNum2]= {1,1*scalem,1,1*scalem,1,1*scalem,1,1*scalem,1};
+float xs2[pointsNum2]= {-1,0,1,-1,0,1,-1,0,1};
+float ys2[pointsNum2]={1,1,1,0,0,0,-1,-1,-1};
+for( int i=0;i<pointsNum2;i++ ){
+    xs2[i]*=scalexy;
+    ys2[i]*=scalexy;
+}
 
-// Nlenses nlens(masses2, xs2, ys2, pointsNum2);
+Nlenses nlens(masses2, xs2, ys2, pointsNum2);
 
 
-Nlenses nlens(masses, xs, ys, pointsNum);
+// Nlenses nlens(masses, xs, ys, pointsNum);
 
 cout <<"masses: ";
 for( int i=0;i<pointsNum;i++ )
@@ -610,8 +610,8 @@ imshow("imgplaneIMG-Critical lines", imgplaneIMG_color);
   String suffix;
   cout << "Please enter image suffix >>: ";
   cin >> suffix;
-imwrite("savedimgs/srcplaneIMG_8U_"+suffix+".png", srcplaneIMG_8U); // A JPG FILE IS BEING SAVED
-imwrite("savedimgs/imgplaneIMG_8U_"+suffix+".png", imgplaneIMG_8U); // A JPG FILE IS BEING SAVED
+// imwrite("savedimgs/srcplaneIMG_8U_"+suffix+".png", srcplaneIMG_8U); // A JPG FILE IS BEING SAVED
+// imwrite("savedimgs/imgplaneIMG_8U_"+suffix+".png", imgplaneIMG_8U); // A JPG FILE IS BEING SAVED
 imwrite("savedimgs/srcplaneIMG_color_"+suffix+".png", srcplaneIMG_color); // A JPG FILE IS BEING SAVED
 imwrite("savedimgs/imgplaneIMG_color_"+suffix+".png", imgplaneIMG_color); // A JPG FILE IS BEING SAVED
         }

@@ -358,7 +358,25 @@ imshow("imgplaneIMG-Critical lines", imgplaneIMG_color);
 // Subminor version : 0
 
 // SetWindowPos(yourhwnd,0,0,0,newWidth,newHeight,SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE);
-waitKey(0);
+// waitKey(0);
+        // Get the pressed value
+        int key = (waitKey(0) & 0xFF);
+
+        if (key == 's'){ //a
+            // String name = format("img%04d.png", i++); // NEW !
+            // imwrite(name, frame);
+  String suffix;
+  cout << "Please enter image suffix >>: ";
+  cin >> suffix;
+// imwrite("savedimgs/srcplaneIMG_8U_"+suffix+".png", srcplaneIMG_8U); // A JPG FILE IS BEING SAVED
+// imwrite("savedimgs/imgplaneIMG_8U_"+suffix+".png", imgplaneIMG_8U); // A JPG FILE IS BEING SAVED
+imwrite("savedimgs/srcplaneIMG_color_"+suffix+".png", srcplaneIMG_color); // A JPG FILE IS BEING SAVED
+imwrite("savedimgs/imgplaneIMG_color_"+suffix+".png", imgplaneIMG_color); // A JPG FILE IS BEING SAVED
+        }
+        else if (key == 'q') return 0; // stop capturing by pressing q
+        else {
+            // Pressed an invalid key... continue with next frame
+        }
 
 
 // cout << "\nmassratio: " << massratio;
