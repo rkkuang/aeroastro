@@ -12,8 +12,10 @@ Alexander C. Thompson, et al.
 '''
 
 import numpy as np
-from utils import genxy, spescatter
+from utils import *
 import matplotlib.pyplot as plt
+# https://stackoverflow.com/questions/18195758/set-matplotlib-colorbar-size-to-match-graph
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 from pathos.pools import ProcessPool
 from tqdm import tqdm
 # from matplotlib import animation as ani
@@ -149,7 +151,7 @@ class Nlenses(object):
 
 
         srcplaneIMG /= srcplaneIMG_withoutlens
-        return srcplaneIMG, imgplaneIMG
+        return srcplaneIMG, imgplaneIMG, srcplaneIMG_withoutlens
 
     def compIMGs(self, a):  
         print("A new core for calculating images is started")
@@ -163,7 +165,8 @@ class Nlenses(object):
                 pass
         return resimg
 
-    def com_lightcurve_v2(self,srcIMG, inX, inY, xlim, ylim, radius):
+
+    def com_lightcurve_v2(self,srcIMG,srcIMG_nomag, inX, inY, xlim, ylim, radius):
         # radius in pixel
         print("Generating lightcurve")
         ImgSize = srcIMG.shape
@@ -197,6 +200,7 @@ class Nlenses(object):
             lc[i] /= num
         return lc
 
+
     def com_lightcurve(self,srcIMG, inX, inY, xlim, ylim, radius, npoints):
         # radius in pixel
         print("Generating lightcurve")
@@ -225,6 +229,42 @@ class Nlenses(object):
                     pass
             lc[i] /= NUM
         return lc
+
+    def get_imgs_lessmem_v2(self, ImgSize, xlim, ylim, num,datatype=np.float64):
+        srcplaneIMG = np.zeros(ImgSize).astype(datatype)
+        srcplaneIMG_withoutlens = np.zeros(ImgSize).astype(datatype)
+        imgplaneIMG = np.zeros(ImgSize).astype(datatype)
+        # IMG = np.ones(ImgSize)
+        ratiox, ratioy = (ImgSize[1]-1)/(xlim[1]-xlim[0]), (ImgSize[0]-1)/(ylim[1]-ylim[0])
+        incx = (xlim[1]-xlim[0])/num
+        incy = (ylim[1]-ylim[0])/num
+
+
+        with tqdm(total=num) as pbar:
+            for thetax in np.linspace(xlim[0], xlim[1], num).astype(datatype):
+                thetay = np.linspace(ylim[0],ylim[1],num).astype(datatype)
+                thetax = np.ones(thetay.shape)*thetax
+                betax, betay, MAG = self.ray_shoot_comp_mag_in_one(thetax, thetay)
+                # print(mag, betax, betay)
+                xdata = thetax - xlim[0]# thetax
+                ydata = thetay - ylim[0]# thetax
+                betaxdata = betax - xlim[0]
+                betaydata = betay - ylim[0]
+                # try:
+                BJ = (betaydata*ratioy+0.5).astype(np.int)
+                BI = (betaxdata*ratiox+0.5).astype(np.int)
+                J = (ydata*ratioy+0.5).astype(np.int)
+                I = (xdata*ratiox+0.5).astype(np.int)
+                for idx in range(num):
+                    bi, bj, i, j, mag = BI[idx], BJ[idx], I[idx], J[idx], MAG[idx]
+                    if ((bi>=0 and bi<ImgSize[1]) and (bj>=0 and bj<ImgSize[0])):
+                        srcplaneIMG[bj, bi] += mag
+                    if ((i>=0 and i<ImgSize[1]) and (j>=0 and j<ImgSize[0])):
+                        srcplaneIMG_withoutlens[j,i] += 1
+                        imgplaneIMG[j,i] += mag
+                pbar.update(1)
+        srcplaneIMG /= srcplaneIMG_withoutlens
+        return srcplaneIMG, imgplaneIMG, srcplaneIMG_withoutlens
 
     def get_imgs_lessmem(self, ImgSize, xlim, ylim, num,datatype=np.float64):
         srcplaneIMG = np.zeros(ImgSize).astype(datatype)
@@ -273,44 +313,7 @@ class Nlenses(object):
                         pbar.update(1)
 
         srcplaneIMG /= srcplaneIMG_withoutlens
-        return srcplaneIMG, imgplaneIMG
-
-
-
-    def get_imgs_lessmem_v2(self, ImgSize, xlim, ylim, num,datatype=np.float64):
-        srcplaneIMG = np.zeros(ImgSize).astype(datatype)
-        srcplaneIMG_withoutlens = np.zeros(ImgSize).astype(datatype)
-        imgplaneIMG = np.zeros(ImgSize).astype(datatype)
-        # IMG = np.ones(ImgSize)
-        ratiox, ratioy = (ImgSize[1]-1)/(xlim[1]-xlim[0]), (ImgSize[0]-1)/(ylim[1]-ylim[0])
-        incx = (xlim[1]-xlim[0])/num
-        incy = (ylim[1]-ylim[0])/num
-        with tqdm(total=num) as pbar:
-            for thetax in np.linspace(xlim[0], xlim[1], num).astype(datatype):
-                thetay = np.linspace(ylim[0],ylim[1],num).astype(datatype)
-                # thetax = np.ones(thetay.shape)*thetax
-                thetax = np.ones((num, ))*thetax
-                betax, betay, MAG = self.ray_shoot_comp_mag_in_one(thetax, thetay)
-                # print(mag, betax, betay)
-                xdata = thetax - xlim[0]# thetax
-                ydata = thetay - ylim[0]# thetax
-                betaxdata = betax - xlim[0]
-                betaydata = betay - ylim[0]
-                # try:
-                BJ = (betaydata*ratioy+0.5).astype(np.int)
-                BI = (betaxdata*ratiox+0.5).astype(np.int)
-                J = (ydata*ratioy+0.5).astype(np.int)
-                I = (xdata*ratiox+0.5).astype(np.int)
-                for idx in range(num):
-                    bi, bj, i, j, mag = BI[idx], BJ[idx], I[idx], J[idx], MAG[idx]
-                    if ((bi>=0 and bi<ImgSize[1]) and (bj>=0 and bj<ImgSize[0])):
-                        srcplaneIMG[bj, bi] += mag
-                    if ((i>=0 and i<ImgSize[1]) and (j>=0 and j<ImgSize[0])):
-                        srcplaneIMG_withoutlens[j,i] += 1
-                        imgplaneIMG[j,i] += mag
-                pbar.update(1)
-        srcplaneIMG /= srcplaneIMG_withoutlens
-        return srcplaneIMG, imgplaneIMG
+        return srcplaneIMG, imgplaneIMG, srcplaneIMG_withoutlens
 
     def ray_shoot_comp_mag_in_one(self, thetax, thetay):
         A11=1
@@ -361,17 +364,19 @@ class Nlenses(object):
 
 if __name__ == '__main__':
     # plt.style.use('classic')
+    # py3 .py 4.5 -0.2 1 2048 5000 0.35 fast/slow
     import sys
     xylim = float(sys.argv[1])
-    Nrows = int(sys.argv[2])
-    
+    # Nrows = int(sys.argv[2])
+    q = float(sys.argv[2])
     posscale = float(sys.argv[3])
     imgsz = int(sys.argv[4])
     num = int(sys.argv[5])
     kscale = float(sys.argv[6])
     method = str(sys.argv[7])
 
-    stupstr = "{}pms_{}X_{}rays".format(Nrows,posscale,num)
+
+    stupstr = "{}pms_{}q_{}X_{}rays".format(2,q,posscale,num)
 
     # python3 *.py 4.5 5 0.5 512 1000
 
@@ -380,26 +385,26 @@ if __name__ == '__main__':
     # xlim, ylim = (-4.5,4.5), (-4.5,4.5)
     xlim, ylim = (-xylim,xylim), (-xylim,xylim)
 
-    masses = []
-    xs = []
-    ys = []
-    # Nrows = 5
-    minx = abs(Nrows//2)
-    for i in range(Nrows):
-            masses += [(-1)**(i+k) for k in range(Nrows)]
-            # masses += [(1)**(i+k) for k in range(Nrows)]
-            xs += [k for k in range(-minx,Nrows-minx)]
-            ys += [i-minx for k in range(Nrows)]
-    # posscale = 0.5 # 0.3 --> 1
+    # masses = []
+    # xs = []
+    # ys = []
+    # # Nrows = 5
+    # minx = abs(Nrows//2)
+    # for i in range(Nrows):
+    #         masses += [(-1)**(i+k) for k in range(Nrows)]
+    #         # masses += [(1)**(i+k) for k in range(Nrows)]
+    #         xs += [k for k in range(-minx,Nrows-minx)]
+    #         ys += [i-minx for k in range(Nrows)]
+    # # posscale = 0.5 # 0.3 --> 1
 
     
-    # # masses = [-0.2, 1]
-    # q = -0.2
-    # masses = [q/(1+q),1/(1+q)]
-    # xs = [1, -1]
-    # ys = [0,0]
+    # masses = [-0.2, 1]
+    
+    masses = [q/(1+q),1/(1+q)]
+    xs = [1, -1]
+    ys = [0,0]
     # posscale = 0.35
-    # # X = 1, raynum = 4000(or 20000, the pattern is different)
+    # X = 1, raynum = 4000(or 20000, the pattern is different)
 
 
     masses = np.array(masses)
@@ -429,35 +434,130 @@ if __name__ == '__main__':
         twolens.inverse_ray_shooting(thetax, thetay)
         twolens.comp_mag_samez(thetax, thetay)
         t0 = time.time()
-        srcplaneIMG, imgplaneIMG = twolens.img_mapping_inone(thetax, thetay,twolens.betax, twolens.betay, xlim, ylim, ImgSize,valarr1 = twolens.mag, valarr2 = np.ones([len(thetax),]), datatype=datatype)
+        srcplaneIMG, imgplaneIMG, srcplaneIMG_withoutlens = twolens.img_mapping_inone(thetax, thetay,twolens.betax, twolens.betay, xlim, ylim, ImgSize,valarr1 = twolens.mag, valarr2 = np.ones([len(thetax),]), datatype=datatype)
         t1 = time.time()
     elif method == "slow":
         t0 = time.time()
         # srcplaneIMG, imgplaneIMG = twolens.get_imgs_lessmem(ImgSize, xlim, ylim, num, datatype = np.float64)
-        srcplaneIMG, imgplaneIMG = twolens.get_imgs_lessmem_v2(ImgSize, xlim, ylim, num, datatype = np.float64)
+        srcplaneIMG, imgplaneIMG, srcplaneIMG_withoutlens = twolens.get_imgs_lessmem_v2(ImgSize, xlim, ylim, num, datatype = np.float64)
         t1 = time.time()
-        print("time spent on img_mapping_inone: {}".format(t1-t0))
     # # mid fast method   
     else:
         thetax, thetay = genxy(xlim=xlim,ylim=ylim,num=num, datatype = datatype)
         twolens.inverse_ray_shooting(thetax, thetay)
         twolens.comp_mag_samez(thetax, thetay)
         t0 = time.time()
-        # print(twolens.mag)
         srcplaneIMG = twolens.img_mapping(twolens.betax, twolens.betay, xlim, ylim, ImgSize, valarr = twolens.mag) #valarr = np.ones([len(twolens.betax),])
         srcplaneIMG_withoutlens = twolens.img_mapping(thetax, thetay, xlim, ylim, ImgSize, valarr = np.ones([len(thetax),]))
         srcplaneIMG /= srcplaneIMG_withoutlens
-        # srcplaneIMG += 1
-        # srcplaneIMG = np.log10(srcplaneIMG)
         imgplaneIMG = twolens.img_mapping(thetax, thetay, xlim, ylim, ImgSize, valarr = twolens.mag)
-        # print(srcplaneIMG_withoutlens)
-        # print(srcplaneIMG)
         t1 = time.time()
-        print("time spent on img_mapping_inone: {}".format(t1-t0))
+    print("time spent on inverse ray shooting: {}".format(t1-t0))
+
+    # generate light curve
+    # radius, npoints = 5, 40 # radius in pixel
+    sourcesizeR_E = 0.03 # source size 0.03 R_E
+    radius = int(sourcesizeR_E*ImgSize[1]/(xlim[1]-xlim[0]) + 0.5)
+    # print(radius)# 12
+    # radius = 15# radius in pixel
+    k = 0.5
+    # kscale = 0.6 # source position for generate light curve
+    print("kscale",kscale)
+    B = np.linspace( 1, -1 , 5)*kscale
+    KB = [(k,b) for b in B]
+    cname = ["r","g","y","k","c","m","w"]
+    COLLOR = cname[:len(KB)]
+    Y, LC = {}, {}
+    scale = 0.7
+    # x = np.linspace(xlim[0]*scale, xlim[1]*scale, int(ImgSize[1]*scale/2))#, endpoint=False
+    x = np.linspace(xlim[0]*scale, xlim[1]*scale, int(ImgSize[1]*scale/radius*3))#, endpoint=False
+    for kb in KB:
+        k,b = kb[0], kb[1]
+        Y[kb] = k*x + b
+    #     LC[kb] = twolens.com_lightcurve(srcplaneIMG, x, Y[kb], xlim, ylim, radius, npoints)
+        LC[kb] = twolens.com_lightcurve_v2(srcplaneIMG, srcplaneIMG_withoutlens, x, Y[kb], xlim, ylim, radius)
+
+    # # plot critical lines and caustics
+    timestr=time.ctime().replace(" ","")[3:-4]
+    fontsize = 18
+    font1 = {'family' : 'Times New Roman',
+    'weight' : 'normal',
+    'size'   : fontsize,
+    }
+    fig3 = plt.figure()
+    fig3.set_size_inches(16,9)
+    plt.subplots_adjust(left=0.04, top = 0.9, bottom = 0.05, right=0.96, hspace = 0.2, wspace = 0.2)
+    plt.margins(0,0)
+
+    grid = plt.GridSpec(10, 3, wspace=0.2, hspace=0)#, wspace=0.5, hspace=0.5
+    plt.subplot(grid[0:5,0])
+    # plt.subplot(131)
+    cmap = plt.cm.get_cmap('viridis')
+    imgplaneim = plt.imshow(np.log10(imgplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
+    # plt.colorbar()
+    add_colorbar(imgplaneim)
+    title = "Critical lines of {} point masses, q={:.2f}, X = {:.2f}, (Log scale)".format(len(masses),q,posscale)
+    # plt.title(title)
+    plt.xlabel(r"$\xi_1(D_d\theta_E)$", font1)
+    plt.ylabel(r"$\xi_2(D_d\theta_E)$", font1)
+    # plt.tick_params(labelsize=fontsize)
+
+    plt.subplot(grid[5:10,0])
+    # plt.subplot(132)
+    cmap = plt.cm.get_cmap('viridis') # 'Paired', viridis, gist_ncar, 
+    srcplaneim = plt.imshow(np.log10(srcplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
+    # plt.colorbar()
+    add_colorbar(srcplaneim)
+    title = "Caustics of {} point masses(blue/red - smaller/larger than 0),\n, q={:.2f}, X = {:.2f}, (Log scale)".format(len(masses),q,posscale)
+    for m, a, b in zip(masses , xs, ys):  
+        if m < 0:
+            c = "b"
+        else:
+            c = "r"
+        plt.scatter(a,b,color=c,marker="x",s=0.1)
+    # plt.title(title)
+
+    cnt = 0
+    for kb in KB:
+        plt.plot(x,Y[kb],color=COLLOR[cnt],linewidth=0.8)#-ylim[0]
+        cnt += 1
+    plt.xlabel(r"$\eta_1(D_s\theta_E)$", font1)
+    plt.ylabel(r"$\eta_2(D_s\theta_E)$", font1)
+    # plt.tick_params(labelsize=fontsize)
 
 
+    #light curve
+    axes = [1 for i in range(len(KB))]
+    cnt = 0
 
-
+    for kb in KB:
+    #     axes[cnt] = plt.subplot(len(KB), 2, cnt*2+2) #int("42"+str(cnt*2+2))
+        axes[cnt] = plt.subplot(grid[cnt*2:cnt*2+2,1:3])
+    #     plt.tick_params(labelsize=fontsize)
+        label = "k={:.2f}, b={:.2f}".format(kb[0],kb[1])
+        
+    #     axes[cnt].plot(x,np.log10(LC[kb]),color=COLLOR[cnt],label=label)
+    #     axes[cnt].set_ylim([-3, 4])
+    #     axes[cnt].set_ylabel(r"$\log$ $\mu$")#
+        
+        axes[cnt].plot(x,(LC[kb]),color=COLLOR[cnt],label=label)
+        axes[cnt].plot([x[0],x[-1]],[1,1],linewidth=0.5)
+        axes[cnt].set_ylim([-1, 10])
+        axes[cnt].set_ylabel(r"$\mu$")#,fontsize = fontsize
+        
+        
+        axes[cnt].legend()#prop=font1
+        axes[cnt].set_xlabel(r"$t/t_E$",fontsize = fontsize)
+        
+        if cnt == 0:
+    #         pass
+            title = r"Light Curve of a source star with radius {:.2f} $R_E$".format(sourcesizeR_E)+"\n"+r"2 point mass ratio: $q =$ {:.2f}, separation: $2X =$ {:.2f}".format(q,2*posscale)
+            plt.title(title,fontsize=fontsize)
+        
+        cnt += 1
+    plt.subplots_adjust(hspace=.0)
+    lightcurve_filename = "./resimgs/lightcurve_{}_{}.png".format(timestr, stupstr)
+    fig3.savefig(lightcurve_filename, format='png', bbox_inches='tight', dpi=100, pad_inches = 0)
     # twolens = Twolenses(lens1, lens2)
     # posscale = 0.2
     # lenses = [(1, -1*posscale, 1*posscale), (-1, 0*posscale, 1*posscale), (1, 1*posscale, 1*posscale),
@@ -523,174 +623,176 @@ if __name__ == '__main__':
     # If you don't need all colors to be different, 
     # try one of the repeating maps like flag or prism
     
+    '''                
+                    # fig = plt.figure()
+                    # plt.subplot(122)
+                    # cmap = plt.cm.get_cmap('viridis') # 'Paired', viridis, gist_ncar, 
+                    # plt.imshow(np.log10(srcplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
+                    # #title = "Two point mass lenses, with mass ratio:\n"+r" $\mu_1/\mu_2=${:.2f} and $x_1=${:.1f}, $x_2 =${:.1f}, $\beta={:.1f}$".format(twolens.massratio, twolens.lens1.pos[0], twolens.lens2.pos[0] ,twolens.beta)
+                    # # title = "Two point mass lenses, src plane (log scale), with mass ratio:\n"+r" $M_1/M_2=${:.3f} and $x_1=${:.1f}, $x_2 =${:.1f}, $D1={:.2f}$, $D2={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], d1d2[0], d1d2[1])
+                    # plt.colorbar()
+                    # # plt.scatter(xs, ys,  c='r',edgecolors='blue',marker='o',s=0)  
+                    # # 1，plt.text(横坐标，纵坐标，‘显示文字’)
+                    # # 2,  plt.annotate('文字',xy=(箭头坐标),xytext=(文字坐标),arrowprops=dict(facecolor='箭头颜色'))
+                    # # for m, a, b in zip(masses , xs, ys):  
+                    # #     # plt.text(a, b, "({:.2f},{:.2f},{:.2f})".format(a,b,m),ha='center', va='bottom', fontsize=5) 
+                    # #     plt.text(a, b, "{:.2f}".format(m),ha='center', va='bottom', fontsize=4) 
+                    # # title = "Caustics of {} point masses, (Log scale)".format(len(masses))
+                    # title = "Caustics of {} point masses, q={:.2f}, X = {:.2f}, (Log scale)".format(len(masses),q,posscale)
+                    # plt.title(title)
+                    
 
-    fig = plt.figure()
-    plt.subplot(122)
-    cmap = plt.cm.get_cmap('viridis') # 'Paired', viridis, gist_ncar, 
-    plt.imshow(np.log10(srcplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
-    #title = "Two point mass lenses, with mass ratio:\n"+r" $\mu_1/\mu_2=${:.2f} and $x_1=${:.1f}, $x_2 =${:.1f}, $\beta={:.1f}$".format(twolens.massratio, twolens.lens1.pos[0], twolens.lens2.pos[0] ,twolens.beta)
-    # title = "Two point mass lenses, src plane (log scale), with mass ratio:\n"+r" $M_1/M_2=${:.3f} and $x_1=${:.1f}, $x_2 =${:.1f}, $D1={:.2f}$, $D2={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], d1d2[0], d1d2[1])
-    plt.colorbar()
-    # plt.scatter(xs, ys,  c='r',edgecolors='blue',marker='o',s=0)  
-    # 1，plt.text(横坐标，纵坐标，‘显示文字’)
-    # 2,  plt.annotate('文字',xy=(箭头坐标),xytext=(文字坐标),arrowprops=dict(facecolor='箭头颜色'))
-    # for m, a, b in zip(masses , xs, ys):  
-    #     # plt.text(a, b, "({:.2f},{:.2f},{:.2f})".format(a,b,m),ha='center', va='bottom', fontsize=5) 
-    #     plt.text(a, b, "{:.2f}".format(m),ha='center', va='bottom', fontsize=4) 
-    # title = "Caustics of {} point masses, (Log scale)".format(len(masses))
-    title = "Caustics of {} point masses, X = {:.2f}, (Log scale)".format(len(masses),posscale)
-    plt.title(title)
-    
+                    # # fig = plt.figure()
+                    # plt.subplot(121)
+                    # cmap = plt.cm.get_cmap('viridis')
+                    # plt.imshow(np.log10(imgplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
+                    # #title = "Two point mass lenses, with mass ratio:\n"+r" $\mu_1/\mu_2=${:.2f} and $x_1=${:.1f}, $x_2 =${:.1f}, $\beta={:.1f}$".format(twolens.massratio, twolens.lens1.pos[0], twolens.lens2.pos[0] ,twolens.beta)
+                    # # title = "Two point mass lenses, img plane (log scale), with mass ratio:\n"+r" $M_1/M_2=${:.3f} and $x_1=${:.1f}, $x_2 =${:.1f}, $D1={:.2f}$, $D2={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], d1d2[0], d1d2[1])
+                    # # title = "Critical lines of {} point masses (Log scale)".format(len(masses))
+                    # plt.colorbar()
+                    # title = "Critical lines of {} point masses, q={:.2f}, X = {:.2f}, (Log scale)".format(len(masses),q,posscale)
+                    # plt.title(title)
+                    
 
-    # fig = plt.figure()
-    plt.subplot(121)
-    cmap = plt.cm.get_cmap('viridis')
-    plt.imshow(np.log10(imgplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
-    #title = "Two point mass lenses, with mass ratio:\n"+r" $\mu_1/\mu_2=${:.2f} and $x_1=${:.1f}, $x_2 =${:.1f}, $\beta={:.1f}$".format(twolens.massratio, twolens.lens1.pos[0], twolens.lens2.pos[0] ,twolens.beta)
-    # title = "Two point mass lenses, img plane (log scale), with mass ratio:\n"+r" $M_1/M_2=${:.3f} and $x_1=${:.1f}, $x_2 =${:.1f}, $D1={:.2f}$, $D2={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], d1d2[0], d1d2[1])
-    # title = "Critical lines of {} point masses (Log scale)".format(len(masses))
-    plt.colorbar()
-    title = "Critical lines of {} point masses, X = {:.2f}, (Log scale)".format(len(masses),posscale)
-    plt.title(title)
-    
+                    # # lensplaneIMG = twolens.img_mapping(thetax, thetay, xlim, ylim, ImgSize)
+                    # # if lensplaneIMG.min() == 0:
+                    # #     lensplaneIMG[lensplaneIMG==0]=1
+                    # # CausticsIMG = srcplaneIMG/lensplaneIMG
 
-    # lensplaneIMG = twolens.img_mapping(thetax, thetay, xlim, ylim, ImgSize)
-    # if lensplaneIMG.min() == 0:
-    #     lensplaneIMG[lensplaneIMG==0]=1
-    # CausticsIMG = srcplaneIMG/lensplaneIMG
+                    # # plt.figure()
+                    # # plt.imshow(CausticsIMG, origin='lower',cmap=cmap)
+                    # # plt.colorbar()
 
-    # plt.figure()
-    # plt.imshow(CausticsIMG, origin='lower',cmap=cmap)
-    # plt.colorbar()
+                    # # matplotlib.animation.FuncAnimation(fig, func, frames=None, init_func=None, fargs=None, save_count=None, **kwargs)
+                    # # ani.FuncAnimation(fig, func, frames=None, init_func=None, fargs=None, save_count=None, **kwargs)
 
-    # matplotlib.animation.FuncAnimation(fig, func, frames=None, init_func=None, fargs=None, save_count=None, **kwargs)
-    # ani.FuncAnimation(fig, func, frames=None, init_func=None, fargs=None, save_count=None, **kwargs)
+                    # # plt.tight_layout()
 
-    # plt.tight_layout()
-
-    fig.set_size_inches(16,9)
-
-
-    # plt.subplots_adjust(top = 2, bottom = 2, right = 1, left = 1, hspace = 0, wspace = 0)
-    # 有六个可选参数来控制子图布局。值均为0~1之间。其中left、bottom、right、top围成的区域就是子图的区域。wspace、hspace分别表示子图之间左右、上下的间距
-    plt.subplots_adjust(left=0.04, top = 0.9, bottom = 0.05, right=0.96, hspace = 0.13, wspace = 0.13)
-    plt.margins(0,0)
-    # caustics_filename = "./resimgs/neg_mass2point_samez/massratio_{:.3f}X1{:.2f}X2{:.2f}_caustics.png".format(massratio,lens1.pos[0],lens2.pos[0])
-    # fig.savefig(caustics_filename, format='png', bbox_inches='tight', dpi=900, pad_inches = 0)#, transparent=True
-
-    timestr=time.ctime().replace(" ","")[3:-4]
-    caustics_filename = "./resimgs/foranndy/Caustics_{}_{}.png".format(timestr, stupstr)
-    # fig.savefig(caustics_filename, format='png', bbox_inches='tight', dpi=600, pad_inches = 0)#, transparent=True
-
-    # k,b = 0,0
-    # scale = 0.5
-    
-    # x = np.linspace(xlim[0]*scale, xlim[1]*scale, int(ImgSize[1]*scale))#ImgSize[1]
-    # y = k*x + b 
-    # lc = twolens.com_lightcurve(srcplaneIMG, x, y, xlim, ylim, )
-    # plt.figure()
-    # plt.plot(x, np.log10(lc))
-    # print(np.log10(lc)[:10])
-    # # plt.ylim((0,5))
-    # plt.ylabel("Log Magnification")
-    # plt.show()
-
-    radius, npoints = 5, 40 # radius in pixel
-    k = 0.5
-    # B = np.array([0.5,0.4,0.3,0.2,0.1,0.01]) - 0.2
-    B = np.linspace( -minx, Nrows-minx , 5)*kscale
-    KB = [(k,b) for b in B]
-    #https://www.cnblogs.com/darkknightzh/p/6117528.html
-    #b: blue g: green r: red c: cyan m: magenta y: yellow k: black w: white
-    # COLLOR = ["r","g","y","k","c","m","w"]
-
-    # cname = []
-    # import matplotlib
-    # for name, _ in matplotlib.colors.cnames.items():
-        # cname.append(name)
-
-    # import matplotlib.colors as colors
-    # import random
-    # cname = list(colors._colors_full_map.keys())
-    # random.shuffle(cname)
-
-    cname = ["r","g","y","k","c","m","w"]
-    COLLOR = cname[:len(KB)]
-
-    # LABEL = ["label1","label2","label3","label4"]
-    Y, LC = {}, {}
-    scale = 0.9
-    # print(xlim,"xlim")
-    # print(ylim,"ylim")
-    x = np.linspace(xlim[0]*scale, xlim[1]*scale, int(ImgSize[1]*scale/2))#, endpoint=False
-    # print(x)
-    for kb in KB:
-        k,b = kb[0], kb[1]
-        Y[kb] = k*x + b
-        LC[kb] = twolens.com_lightcurve(srcplaneIMG, x, Y[kb], xlim, ylim, radius, npoints)
-        # print(x)
-
-    fig = plt.figure()
-    # fig, axs =  plt.subplots(len(KB), 2)
-    # https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.subplots.html
-    # fig, axes = plt.subplots(4, 2, sharex='col')
-    fig.set_size_inches(16,9)
-    plt.subplots_adjust(left=0.04, top = 0.9, bottom = 0.05, right=0.96, hspace = 0.13, wspace = 0.13)
-    plt.margins(0,0)
-
-    plt.subplot(121)
-
-    # plt.title("Source Place")
-    cmap = plt.cm.get_cmap('viridis') # 'Paired', viridis, gist_ncar, 
-    plt.imshow(np.log10(srcplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
-    # axes[0,0].imshow(np.log10(srcplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
-    # title = "Two point mass lenses, src plane (log scale), with mass ratio:\n"+r" $M_1/M_2=${:.3f} and $x_1=${:.1f}, $x_2 =${:.1f}, $D1={:.2f}$, $D2={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], d1d2[0], d1d2[1])
-    # title = "Caustics of {} point masses (Log scale)".format(len(masses))
-    plt.colorbar()
-    title = "Caustics of {} point masses(blue/red - smaller/larger than 0),\n X = {:.2f}, (Log scale)".format(len(masses),posscale)
-    for m, a, b in zip(masses , xs, ys):  
-        if m < 0:
-            c = "b"
-        else:
-            c = "r"
-        plt.scatter(a,b,color=c,marker="x")
-    plt.title(title)
-    # plt.colorbar()
-    # plt.hold(True)
-    cnt = 0
-    for kb in KB:
-        plt.plot(x,Y[kb],color=COLLOR[cnt])#-ylim[0]
-        cnt += 1
+                    # fig.set_size_inches(16,9)
 
 
-    # plt.subplot(122)
+                    # # plt.subplots_adjust(top = 2, bottom = 2, right = 1, left = 1, hspace = 0, wspace = 0)
+                    # # 有六个可选参数来控制子图布局。值均为0~1之间。其中left、bottom、right、top围成的区域就是子图的区域。wspace、hspace分别表示子图之间左右、上下的间距
+                    # plt.subplots_adjust(left=0.04, top = 0.9, bottom = 0.05, right=0.96, hspace = 0.13, wspace = 0.13)
+                    # plt.margins(0,0)
+                    # # caustics_filename = "./resimgs/neg_mass2point_samez/massratio_{:.3f}X1{:.2f}X2{:.2f}_caustics.png".format(massratio,lens1.pos[0],lens2.pos[0])
+                    # # fig.savefig(caustics_filename, format='png', bbox_inches='tight', dpi=900, pad_inches = 0)#, transparent=True
 
-    # plt.subplots(122, sharex=True)
-    axes = [1 for i in range(len(KB))]
-    cnt = 0
-    # plt.subplot(len(KB),2)
-    for kb in KB:
-        axes[cnt] = plt.subplot(len(KB), 2, cnt*2+2) #int("42"+str(cnt*2+2))
-        label = "k={:.2f}, b={:.2f}".format(kb[0],kb[1])
-        axes[cnt].plot(x,np.log10(LC[kb]),color=COLLOR[cnt],label=label)
-        # axes[cnt].ylim(0,5)
-        axes[cnt].set_ylim([-4, 5])
-        axes[cnt].legend()
-        if cnt == 0:
-            plt.title("Light Curve (Log scale)")
-        # axes[cnt,1].plot(x,np.log10(LC[kb]),color=COLLOR[cnt],label=label)
-        cnt += 1
-    # axes[0].get_shared_x_axes().join(axes[0], axes[1], axes[2],axes[3])
-    # axes[0].set_xticklabels([])
-    plt.subplots_adjust(hspace=.0)
-    # plt.subplot(122)
-    
-    
-    # https://stackoverflow.com/questions/37737538/merge-matplotlib-subplots-with-shared-x-axis/37738851
-    
-    
-    lightcurve_filename = "./resimgs/foranndy/lightcurve_{}_{}.png".format(timestr, stupstr)
-    # fig.savefig(lightcurve_filename, format='png', bbox_inches='tight', dpi=600, pad_inches = 0)#, transparent=True
+                    # timestr=time.ctime().replace(" ","")[3:-4]
+                    # caustics_filename = "./resimgs/foranndy/Caustics_{}_{}.png".format(timestr, stupstr)
+                    # # fig.savefig(caustics_filename, format='png', bbox_inches='tight', dpi=600, pad_inches = 0)#, transparent=True
+
+                    # # k,b = 0,0
+                    # # scale = 0.5
+                    
+                    # # x = np.linspace(xlim[0]*scale, xlim[1]*scale, int(ImgSize[1]*scale))#ImgSize[1]
+                    # # y = k*x + b 
+                    # # lc = twolens.com_lightcurve(srcplaneIMG, x, y, xlim, ylim, )
+                    # # plt.figure()
+                    # # plt.plot(x, np.log10(lc))
+                    # # print(np.log10(lc)[:10])
+                    # # # plt.ylim((0,5))
+                    # # plt.ylabel("Log Magnification")
+                    # # plt.show()
+
+                    # radius, npoints = 5, 40 # radius in pixel
+                    # k = 0.5
+                    # # B = np.array([0.5,0.4,0.3,0.2,0.1,0.01]) - 0.2
+                    # # B = np.linspace( -minx, Nrows-minx , 5)*kscale
+                    # B = np.linspace( -1, 1 , 5)*kscale
+                    # KB = [(k,b) for b in B]
+                    # #https://www.cnblogs.com/darkknightzh/p/6117528.html
+                    # #b: blue g: green r: red c: cyan m: magenta y: yellow k: black w: white
+                    # # COLLOR = ["r","g","y","k","c","m","w"]
+
+                    # # cname = []
+                    # # import matplotlib
+                    # # for name, _ in matplotlib.colors.cnames.items():
+                    #     # cname.append(name)
+
+                    # # import matplotlib.colors as colors
+                    # # import random
+                    # # cname = list(colors._colors_full_map.keys())
+                    # # random.shuffle(cname)
+
+                    # cname = ["r","g","y","k","c","m","w"]
+                    # COLLOR = cname[:len(KB)]
+
+                    # # LABEL = ["label1","label2","label3","label4"]
+                    # Y, LC = {}, {}
+                    # scale = 0.9
+                    # # print(xlim,"xlim")
+                    # # print(ylim,"ylim")
+                    # x = np.linspace(xlim[0]*scale, xlim[1]*scale, int(ImgSize[1]*scale/2))#, endpoint=False
+                    # # print(x)
+                    # for kb in KB:
+                    #     k,b = kb[0], kb[1]
+                    #     Y[kb] = k*x + b
+                    #     LC[kb] = twolens.com_lightcurve(srcplaneIMG, x, Y[kb], xlim, ylim, radius, npoints)
+                    #     # print(x)
+
+                    # fig = plt.figure()
+                    # # fig, axs =  plt.subplots(len(KB), 2)
+                    # # https://matplotlib.org/3.1.0/api/_as_gen/matplotlib.pyplot.subplots.html
+                    # # fig, axes = plt.subplots(4, 2, sharex='col')
+                    # fig.set_size_inches(16,9)
+                    # plt.subplots_adjust(left=0.04, top = 0.9, bottom = 0.05, right=0.96, hspace = 0.13, wspace = 0.13)
+                    # plt.margins(0,0)
+
+                    # plt.subplot(121)
+
+                    # # plt.title("Source Place")
+                    # cmap = plt.cm.get_cmap('viridis') # 'Paired', viridis, gist_ncar, 
+                    # plt.imshow(np.log10(srcplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
+                    # # axes[0,0].imshow(np.log10(srcplaneIMG), origin='lower',cmap=cmap, extent=[xlim[0],xlim[1],ylim[0],ylim[1]])
+                    # # title = "Two point mass lenses, src plane (log scale), with mass ratio:\n"+r" $M_1/M_2=${:.3f} and $x_1=${:.1f}, $x_2 =${:.1f}, $D1={:.2f}$, $D2={:.2f}$".format(massratio, lens1.pos[0], lens2.pos[0], d1d2[0], d1d2[1])
+                    # # title = "Caustics of {} point masses (Log scale)".format(len(masses))
+                    # plt.colorbar()
+                    # title = "Caustics of {} point masses(blue/red - smaller/larger than 0),\n, q={:.2f}, X = {:.2f}, (Log scale)".format(len(masses),q,posscale)
+                    # for m, a, b in zip(masses , xs, ys):  
+                    #     if m < 0:
+                    #         c = "b"
+                    #     else:
+                    #         c = "r"
+                    #     plt.scatter(a,b,color=c,marker="x")
+                    # plt.title(title)
+                    # # plt.colorbar()
+                    # # plt.hold(True)
+                    # cnt = 0
+                    # for kb in KB:
+                    #     plt.plot(x,Y[kb],color=COLLOR[cnt])#-ylim[0]
+                    #     cnt += 1
+
+
+                    # # plt.subplot(122)
+
+                    # # plt.subplots(122, sharex=True)
+                    # axes = [1 for i in range(len(KB))]
+                    # cnt = 0
+                    # # plt.subplot(len(KB),2)
+                    # for kb in KB:
+                    #     axes[cnt] = plt.subplot(len(KB), 2, cnt*2+2) #int("42"+str(cnt*2+2))
+                    #     label = "k={:.2f}, b={:.2f}".format(kb[0],kb[1])
+                    #     axes[cnt].plot(x,np.log10(LC[kb]),color=COLLOR[cnt],label=label)
+                    #     # axes[cnt].ylim(0,5)
+                    #     axes[cnt].set_ylim([-4, 5])
+                    #     axes[cnt].legend()
+                    #     if cnt == 0:
+                    #         plt.title("Light Curve (Log scale)")
+                    #     # axes[cnt,1].plot(x,np.log10(LC[kb]),color=COLLOR[cnt],label=label)
+                    #     cnt += 1
+                    # # axes[0].get_shared_x_axes().join(axes[0], axes[1], axes[2],axes[3])
+                    # # axes[0].set_xticklabels([])
+                    # plt.subplots_adjust(hspace=.0)
+                    # # plt.subplot(122)
+                    
+                    
+                    # # https://stackoverflow.com/questions/37737538/merge-matplotlib-subplots-with-shared-x-axis/37738851
+                    
+                    
+                    # lightcurve_filename = "./resimgs/foranndy/lightcurve_{}_{}.png".format(timestr, stupstr)
+    '''
+
 
 
     # lightcurve_filename = "./resimgs/neg_mass2point_samez/massratio_{:.3f}X1{:.2f}X2{:.2f}_lightcurve.png".format(massratio,lens1.pos[0],lens2.pos[0])
@@ -737,4 +839,11 @@ if __name__ == '__main__':
     # plt.colorbar()
 
 
-    plt.show()
+    # plt.show()
+    # if input("save imgs or not? (y/n)>>>: ")=="y":
+    #     fig.savefig(caustics_filename, format='png', bbox_inches='tight', dpi=600, pad_inches = 0)#, transparent=True
+    #     fig.savefig(lightcurve_filename, format='png', bbox_inches='tight', dpi=600, pad_inches = 0)#, transparent=True
+    # if input("save imgs or not? (y/n)>>>: ")=="y":
+    #     #     fig1.savefig(caustics_filename, format='png', bbox_inches='tight', dpi=300, pad_inches = 0)#, transparent=True
+    #     #     fig2.savefig(lightcurve_filename, format='png', bbox_inches='tight', dpi=300, pad_inches = 0)#, transparent=True
+    #     fig3.savefig(lightcurve_filename, format='png', bbox_inches='tight', dpi=100, pad_inches = 0)#, transparent=True
