@@ -25,6 +25,14 @@ arcsec2rad = 1/3600/180*np.pi
 rad2arcsec = 180/np.pi*3600
 
 
+import dill                            #pip install dill --user
+# filename = 'globalsave.pkl'
+# dill.dump_session(filename)
+
+# # and to load the session again:
+# dill.load_session(filename)
+
+
 '''
 
 from tqdm import tqdm
@@ -659,9 +667,11 @@ if __name__ == '__main__':
     title = "Critical lines (left) and Caustics (mid) and Light curves (right) of 2 point mass lenses,\n"+r"$q = ${:.2f} (upper) and $q = ${:.2f} (bottom), $2X = ${:.2f}".format(q, -q,2*posscale)
     plt.suptitle(title, size=18)
     lightcurve_filename = "./resimgs/lightcurve_{}_{}.png".format(timestr, stupstr)
+    pkl_filename = "./resimgs/lightcurve_{}_{}.pkl".format(timestr, stupstr)
 
 
     fig3.savefig(lightcurve_filename, format='png', bbox_inches='tight', dpi=100, pad_inches = 0)
 
     HRlightcurve_filename = "./resimgs/HRlightcurve_{}_{}.png".format(timestr, stupstr)
     fig3.savefig(HRlightcurve_filename, format='png', bbox_inches='tight', dpi=300, pad_inches = 0)
+    dill.dump_session(pkl_filename)
