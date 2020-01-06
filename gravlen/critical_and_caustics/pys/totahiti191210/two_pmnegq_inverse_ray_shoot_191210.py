@@ -71,17 +71,26 @@ class Nlenses(object):
     def inverse_ray_shooting(self, thetax=None, thetay=None):
         # Ri2s = (thetax-self.xs)**2 + (thetay-self.ys)**2  
         # Ri2s = []
-        self.betax, self.betay = thetax.copy(), thetay.copy()
-        for i in range(len(self.xs)):
-            # Ri2s.append( (thetax-self.xs[i])**2 + (thetay-self.ys[i])**2 )
-            Ri2s = (thetax-self.xs[i])**2 + (thetay-self.ys[i])**2
-            self.betax -= self.masses[i]*(thetax - self.xs[i])/Ri2s
-            self.betay -= self.masses[i]*(thetay - self.ys[i])/Ri2s
+        # self.betax, self.betay = thetax.copy(), thetay.copy()
+        # for i in range(len(self.xs)):
+        #     # Ri2s.append( (thetax-self.xs[i])**2 + (thetay-self.ys[i])**2 )
+        #     Ri2s = (thetax-self.xs[i])**2 + (thetay-self.ys[i])**2
+        #     self.betax -= self.masses[i]*(thetax - self.xs[i])/Ri2s
+        #     self.betay -= self.masses[i]*(thetay - self.ys[i])/Ri2s
+
+        betax = thetax.copy()
+        betay = thetay.copy()
+        for i in range(len(self.masses)):
+            Ri2 = (thetax - self.xs[i])**2 + (thetay - self.ys[i])**2
+            betax -= self.masses[i]*(thetax - self.xs[i])/Ri2
+            betay -= self.masses[i]*(thetay - self.ys[i])/Ri2
 
         # r1_2 = (thetax - self.lens1.pos[0])**2 + (thetay - self.lens1.pos[1])**2
         # r2_2 = (thetax - self.lens2.pos[0])**2 + (thetay - self.lens2.pos[1])**2
         # self.betax = thetax - self.mu1*(thetax - self.lens1.pos[0])/r1_2 - self.mu2*(thetax - self.lens2.pos[0])/r2_2
         # self.betay = thetay - self.mu1*(thetay - self.lens1.pos[1])/r1_2 - self.mu2*(thetay - self.lens2.pos[1])/r2_2
+
+        return betax, betay
         
     def comp_mag_samez(self, thetax, thetay):
         # arcsec2rad = 1
@@ -206,6 +215,44 @@ class Nlenses(object):
                     pass
             lc[i] /= NUM
         return lc
+
+    def get_imgs_lessmem_v3(self, ImgSize, xlim, ylim, num,datatype=np.float64):
+        # not use mag in computing src plane map
+        srcplaneIMG = np.zeros(ImgSize).astype(datatype)
+        srcplaneIMG_withoutlens = np.zeros(ImgSize).astype(datatype)
+        imgplaneIMG = np.zeros(ImgSize).astype(datatype)
+        # IMG = np.ones(ImgSize)
+        ratiox, ratioy = (ImgSize[1]-1)/(xlim[1]-xlim[0]), (ImgSize[0]-1)/(ylim[1]-ylim[0])
+        incx = (xlim[1]-xlim[0])/num
+        incy = (ylim[1]-ylim[0])/num
+        with tqdm(total=num) as pbar:
+            for thetax in np.linspace(xlim[0], xlim[1], num).astype(datatype):
+                thetay = np.linspace(ylim[0],ylim[1],num).astype(datatype)
+                thetax = np.ones(thetay.shape)*thetax
+                # betax, betay, MAG = self.ray_shoot_comp_mag_in_one(thetax, thetay)
+                betax, betay = self.inverse_ray_shooting(thetax=thetax, thetay=thetay)
+                # print(mag, betax, betay)
+                xdata = thetax - xlim[0]# thetax
+                ydata = thetay - ylim[0]# thetax
+                betaxdata = betax - xlim[0]
+                betaydata = betay - ylim[0]
+                # try:
+                BJ = (betaydata*ratioy+0.5).astype(np.int)
+                BI = (betaxdata*ratiox+0.5).astype(np.int)
+                J = (ydata*ratioy+0.5).astype(np.int)
+                I = (xdata*ratiox+0.5).astype(np.int)
+                for idx in range(num):
+                    bi, bj, i, j = BI[idx], BJ[idx], I[idx], J[idx]
+                    if ((bi>=0 and bi<ImgSize[1]) and (bj>=0 and bj<ImgSize[0])):
+                        # srcplaneIMG[bj, bi] += mag
+                        srcplaneIMG[bj, bi] += 1
+                    if ((i>=0 and i<ImgSize[1]) and (j>=0 and j<ImgSize[0])):
+                        srcplaneIMG_withoutlens[j,i] += 1
+                        # imgplaneIMG[j,i] += mag
+                        imgplaneIMG[j,i] += 1
+                pbar.update(1)
+        srcplaneIMG /= srcplaneIMG_withoutlens
+        return srcplaneIMG, imgplaneIMG, srcplaneIMG_withoutlens
 
     def get_imgs_lessmem_v2(self, ImgSize, xlim, ylim, num,datatype=np.float64):
         srcplaneIMG = np.zeros(ImgSize).astype(datatype)
