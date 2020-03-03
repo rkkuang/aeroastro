@@ -211,6 +211,7 @@ void Nlenses::get_imgs_lessmem(Mat srcplaneIMG, Mat srcplaneIMG_withoutlens, Mat
     // while(thetax<xlim[1]){
 
     // for (float thetax = xlim[0]; thetax<xlim[1]; thetax=thetax+incx){
+    cout << "Start running ...";
     for (int ix = 0; ix<raynum_1side; ix++){
     // Concurrency::parallel_for(int(0); raynum_1side; [&](int i){
 
@@ -221,9 +222,9 @@ void Nlenses::get_imgs_lessmem(Mat srcplaneIMG, Mat srcplaneIMG_withoutlens, Mat
     // for (float thetax = xlim[0]; thetax<=xlim[1]; thetax=thetax+incx){
     // for (float thetay = ylim[0]; thetax<=ylim[1]; thetay=thetay+incy){
 
-    std::cout.width(3);//i的输出为3位宽
-    std::cout << cnt*100/(raynum_1side*raynum_1side) << "%";
-    std::cout << "\b\b\b\b";//回删三个字符，使数字在原地变化
+    cout.width(3);//i的输出为3位宽
+    cout << cnt*100/(raynum_1side*raynum_1side) << "%";
+    cout << "\b\b\b\b";//回删三个字符，使数字在原地变化
 
     // std::cout << cnt<<", " <<thetax <<", " << thetay << "\n";
     //运行时，对内存操作有误，常报Segmentation fault，Core Dump
@@ -459,29 +460,24 @@ sleep(1); //延时1秒
 generateRandomArray(xs, pointsNum, xs_range[0],xs_range[1],time(NULL));
 sleep(1); //延时1秒 
 generateRandomArray(ys, pointsNum, ys_range[0],ys_range[1],time(NULL));
-
+Nlenses nlens(masses, xs, ys, pointsNum);
 
 // float masses[pointsNum]= {1,1};
 // float xs[pointsNum]= {-0.3, 0.3};
 // float ys[pointsNum]={0,0};
 
 
-unsigned short int pointsNum2 = 9;
-float scalexy = 0.3;
-float scalem = -1;//-0.2;
-float masses2[pointsNum2]= {1,1*scalem,1,1*scalem,1,1*scalem,1,1*scalem,1};
-float xs2[pointsNum2]= {-1,0,1,-1,0,1,-1,0,1};
-float ys2[pointsNum2]={1,1,1,0,0,0,-1,-1,-1};
-for( int i=0;i<pointsNum2;i++ ){
-    xs2[i]*=scalexy;
-    ys2[i]*=scalexy;
-}
-
-Nlenses nlens(masses2, xs2, ys2, pointsNum2);
-
-
-// Nlenses nlens(masses, xs, ys, pointsNum);
-
+// unsigned short int pointsNum2 = 9;
+// float scalexy = 0.3;
+// float scalem = -1;//-0.2;
+// float masses2[pointsNum2]= {1,1*scalem,1,1*scalem,1,1*scalem,1,1*scalem,1};
+// float xs2[pointsNum2]= {-1,0,1,-1,0,1,-1,0,1};
+// float ys2[pointsNum2]={1,1,1,0,0,0,-1,-1,-1};
+// for( int i=0;i<pointsNum2;i++ ){
+//     xs2[i]*=scalexy;
+//     ys2[i]*=scalexy;
+// }
+// Nlenses nlens(masses2, xs2, ys2, pointsNum2);
 cout <<"masses: ";
 for( int i=0;i<pointsNum;i++ )
     cout << masses[i] <<" " ;

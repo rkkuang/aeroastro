@@ -3,11 +3,12 @@
 # g++ two_pointM_lens_inverse_ray_shoot.cpp  `pkg-config opencv --libs --cflags` -o DisplayImage
 # # g++ -c 只编译不链接 
 
+#g++ two_pointM_lens_inverse_ray_shoot.cpp -I/usr/local/include/opencv4 -std=c++11  -o main
+#g++ two_pointM_lens_inverse_ray_shoot.cpp  `pkg-config opencv4 --libs --cflags` -o main
 main:two_pointM_lens_inverse_ray_shoot.cpp
-	g++ two_pointM_lens_inverse_ray_shoot.cpp  `pkg-config opencv4 --libs --cflags` -o main
-mainn:npM_lens_inverse_ray_shoot.cpp 
-	g++ npM_lens_inverse_ray_shoot.cpp `pkg-config opencv4 --libs --cflags` -o mainn
-
+	g++ `pkg-config --cflags --libs opencv4` -std=c++11 -I/usr/local/include/opencv4 two_pointM_lens_inverse_ray_shoot.cpp -o main
+mainn:npM_lens_inverse_ray_shoot.cpp
+	g++ `pkg-config --cflags --libs opencv4` -std=c++11 -I/usr/local/include/opencv4 npM_lens_inverse_ray_shoot.cpp -o mainn
 # test:main.o T1.o
 #     g++ -o test main.o T1.o
 # #=============================================

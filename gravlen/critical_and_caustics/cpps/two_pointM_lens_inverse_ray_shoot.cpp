@@ -105,7 +105,7 @@ void Twolenses::get_imgs_lessmem(Mat srcplaneIMG, Mat srcplaneIMG_withoutlens, M
     float incy = (ylim[1]-ylim[0])/raynum_1side; // increment of y
 
     unsigned long int cnt = 1;
-
+    cout << "Start running ...";
     float thetax = xlim[0];
     while(thetax<xlim[1]){
 
@@ -113,10 +113,10 @@ void Twolenses::get_imgs_lessmem(Mat srcplaneIMG, Mat srcplaneIMG_withoutlens, M
     while(thetay<ylim[1]){
     // for (float thetax = xlim[0]; thetax<=xlim[1]; thetax=thetax+incx){
     // for (float thetay = ylim[0]; thetax<=ylim[1]; thetay=thetay+incy){
-
-    std::cout.width(3);//i的输出为3位宽
-    std::cout << cnt*100/(raynum_1side*raynum_1side) << "%";
-    std::cout << "\b\b\b\b";//回删三个字符，使数字在原地变化
+    
+    cout.width(3);//i的输出为3位宽
+    cout << cnt*100/(raynum_1side*raynum_1side) << "%";
+    cout << "\b\b\b\b";//回删三个字符，使数字在原地变化
 
     // std::cout << cnt<<", " <<thetax <<", " << thetay << "\n";
     //运行时，对内存操作有误，常报Segmentation fault，Core Dump
@@ -268,7 +268,7 @@ float ylim[2] = {-lim,lim};
 // float xlim[2] = {-2.5,2.5};
 // float ylim[2] = {-2.5,2.5};
 
-unsigned short int imshowsize = 640;
+unsigned short int imshowsize = 100;
 unsigned short int ImgSize[2] = {imgsize, imgsize}; // raw, colume
 //unsigned short int    2 个字节   0 到 65,535
 
