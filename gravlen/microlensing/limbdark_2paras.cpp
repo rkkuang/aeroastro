@@ -1,12 +1,13 @@
-double VBBinaryLensing::BinaryMagDark(double a, double q, double y1, double y2, double RSv, double a1, double Tol) {
+double VBBinaryLensing::BinaryMagDark_2paras(double a, double q, double y1, double y2, double RSv, double a1, double b , double Tol) {
 	double Mag = -1.0, Magold = 0., Tolv = Tol;
-	double tc, lb, rb, lc, rc, cb, cc, r2, cr2, scr2;
+	double tc, lb, rb, lc, rc, cb, cc, r2, cr2, scr2, scr4, f1_r0, f2_r0;
 	int c = 0, flag;
 	double currerr, maxerr;
 	annulus *first, *scan, *scan2;
 	int nannold, totNPS = 1;
 	_sols *Images;
-
+	f1_r0 = 1.5 / (3 - a1);
+	f2_r0 = 2.5 / (5 - b);
 	y_1 = y1;
 	y_2 = y2;
 	while ((Mag < 0.9) && (c < 3)) {
@@ -23,7 +24,7 @@ double VBBinaryLensing::BinaryMagDark(double a, double q, double y1, double y2, 
 			first->nim = Images->length;
 			delete Images;
 		}
-		first->f = 3 / (3 - a1);// r = 0, so using point source mag computation above, Images is a _sols object, its length = nim -- number of image tracks
+		first->f = (f1_r0 + f2_r0 );// r = 0, so using point source mag computation above, Images is a _sols object, its length = nim -- number of image tracks
 		first->err = 0;
 		first->prev = 0;
 
@@ -38,7 +39,8 @@ double VBBinaryLensing::BinaryMagDark(double a, double q, double y1, double y2, 
 		totNPS += NPS;
 		scan->nim = Images->length;
 		delete Images;
-		scan->f = first->f * (1 - a1); // r = 1, so using FS mag computation above
+		// scan->f = first->f * (1 - a1); // r = 1, so using FS mag computation above
+		scan->f = (f1_r0 * (1 - a1) + f2_r0 * (1 - b) ); // r = 1, so using FS mag computation above
 		if (scan->nim == scan->prev->nim) {
 			scan->err = fabs((scan->Mag - scan->prev->Mag) * (scan->prev->f - scan->f) / 4);
 		}
@@ -77,7 +79,9 @@ double VBBinaryLensing::BinaryMagDark(double a, double q, double y1, double y2, 
 				r2 = cb * cb;
 				cr2 = 1 - r2;
 				scr2 = sqrt(cr2);
-				cc = (3 * r2 * (1 - a1) - 2 * a1 * (scr2 * cr2 - 1)) / (3 - a1); // cumulative function F(r) from equ(45) at new r = cb, integral of f(r)
+				scr4 = sqrt(scr2);
+				// cc = (3 * r2 * (1 - a1) - 2 * a1 * (scr2 * cr2 - 1)) / (3 - a1); // cumulative function F(r) from equ(45) at new r = cb, integral of f(r)
+				cc = 0.5 * ( (3 * r2 * (1 - a1) - 2 * a1 * (scr2 * cr2 - 1)) / (3 - a1) + (5 * r2 * (1 - b) - 4 * b * (scr4 * cr2 - 1)) / (5 - b)); // cumulative function F(r) from equ(45) at new r = cb, integral of f(r)
 				if (cc > tc) {
 					rb = cb;
 					rc = cc;
@@ -93,7 +97,8 @@ double VBBinaryLensing::BinaryMagDark(double a, double q, double y1, double y2, 
 			scan->prev->next = scan;
 			scan->prev->bin = cb;
 			scan->prev->cum = cc;
-			scan->prev->f = first->f * (1 - a1 * (1 - scr2));//Bozza 2010 42
+			// scan->prev->f = first->f * (1 - a1 * (1 - scr2));//Bozza 2010 42
+			scan->prev->f = ( f1_r0 * ( 1 - a1 * (1 - scr2)) + f2_r0 * ( 1 - b * (1 - scr4) ) ); //Bozza 2010 42
 			scan->prev->Mag = BinaryMag(a, q, y_1, y_2, RSv * cb, Tolv, &Images);
 			totNPS += NPS;
 			scan->prev->nim = Images->length;
