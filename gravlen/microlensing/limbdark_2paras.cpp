@@ -56,8 +56,8 @@ double VBBinaryLensing::BinaryMagDark_2paras(double a, double q, double y1, doub
 	annulus *first, *scan, *scan2;
 	int nannold, totNPS = 1;
 	_sols *Images;
-	f1_r0 = 1.5 / (3 - a1);
-	f2_r0 = 2.5 / (5 - b);
+	f1_r0 = 3 / (3 - a1);
+	f2_r0 = 5 / (5 - b);
 	y_1 = y1;
 	y_2 = y2;
 	while ((Mag < 0.9) && (c < 3)) {
